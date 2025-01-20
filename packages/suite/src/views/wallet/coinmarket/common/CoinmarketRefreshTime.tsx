@@ -59,11 +59,11 @@ export const CoinmarketRefreshTime = ({
             {isLoading ? (
                 <Spinner size={15} />
             ) : (
-                <Wrapper>
-                    <ProgressPieWrap>
+                <Wrapper data-testid="@coinmarket/refresh-time">
+                    <ProgressPieWrap data-testid="@coinmarket/refresh-time-pie">
                         <ProgressPie valueInPercents={progress} />
                     </ProgressPieWrap>
-                    <TimerText data-test="@coinmarket/refresh-time">
+                    <TimerText data-testid="@coinmarket/refresh-time-text">
                         <RefreshLabel>{label}</RefreshLabel>
                         <RefreshTime>{`0:${remaining < 10 ? '0' : ''}${remaining}`}</RefreshTime>
                     </TimerText>

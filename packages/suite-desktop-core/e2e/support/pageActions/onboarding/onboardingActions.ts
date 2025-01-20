@@ -36,6 +36,7 @@ export class OnboardingActions {
     readonly createWalletButton: Locator;
     readonly selectSeedTypeOpenButton: Locator;
     readonly selectSeedConfirmButton: Locator;
+    readonly continueAtYourOwnRiskButton: Locator;
 
     isModelWithSecureElement = () => ['T2B1', 'T3T1'].includes(this.model);
 
@@ -77,6 +78,7 @@ export class OnboardingActions {
         this.selectSeedConfirmButton = this.page.getByTestId(
             '@onboarding/select-seed-type-confirm',
         );
+        this.continueAtYourOwnRiskButton = this.page.getByTestId('@continue-to-suite');
     }
 
     @step()

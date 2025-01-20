@@ -1,5 +1,6 @@
 import path from 'path';
 import type { PlaywrightTestConfig } from '@playwright/test';
+import { devices } from '@playwright/test';
 
 export enum PlaywrightProjects {
     Web = 'web',
@@ -13,7 +14,8 @@ const config: PlaywrightTestConfig = {
         {
             name: PlaywrightProjects.Web,
             use: {
-                browserName: 'chromium',
+                ...devices['Desktop Chrome'],
+                channel: 'chromium',
                 baseURL: process.env.BASE_URL || 'http://localhost:8000/',
             },
             grepInvert: /@desktopOnly/,
@@ -30,7 +32,6 @@ const config: PlaywrightTestConfig = {
     workers: 1, // to disable parallelism between test files
     use: {
         viewport: { width: 1280, height: 720 },
-        headless: process.env.HEADLESS === 'true',
         trace: 'on',
         video: 'on',
         screenshot: 'on',
