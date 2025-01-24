@@ -1,4 +1,7 @@
-import { Locator, expect as baseExpect } from '@playwright/test';
+import { Locator, Request, expect as baseExpect } from '@playwright/test';
+import { diff } from 'jest-diff';
+
+import { isEqualWithOmit } from './common';
 
 const compareTextAndNumber = async (
     locator: Locator,
@@ -48,5 +51,26 @@ export const expect = baseExpect.extend({
     },
     async toHaveTextLessThan(locator: Locator, expectedValue: number) {
         return await compareTextAndNumber(locator, expectedValue, (a, b) => a < b, 'less');
+    },
+    async toHavePayload(
+        requestPromise: Promise<Request>,
+        expectedPayload: any,
+        options?: { omit: string[] },
+    ) {
+        const requestPayload = (await requestPromise).postDataJSON();
+        const isRequestPayloadMatching = isEqualWithOmit({
+            object1: requestPayload,
+            object2: expectedPayload,
+            mask: options?.omit ?? [],
+        });
+
+        return {
+            pass: isRequestPayloadMatching,
+            message: () =>
+                `Request payload differs from expected.
+                \nDiff: ${diff(requestPayload, expectedPayload)}
+                \nActual: ${JSON.stringify(requestPayload)}
+                \nExpected: ${JSON.stringify(expectedPayload)}`,
+        };
     },
 });
