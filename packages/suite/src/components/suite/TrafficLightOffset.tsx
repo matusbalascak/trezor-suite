@@ -11,22 +11,15 @@ type Props = {
     isVisible?: boolean;
 };
 
-// See: https://github.com/electron/electron/issues/5678
-// Visible all the time in the app
-const ThinFixForNotBeingAbleToDragWindow = styled.div`
+const FixForNotBeingAbleToDragWindow = styled.div`
     -webkit-app-region: drag;
-    height: 16px;
+    pointer-events: none;
+    height: 64px;
     position: fixed;
     z-index: ${zIndices.windowControls};
     top: 0;
     left: 0;
     width: 100%;
-`;
-
-// Visible below content (but visible in the sidebar)
-const ThickFixForNotBeingAbleToDragWindow = styled(ThinFixForNotBeingAbleToDragWindow)`
-    height: 64px;
-    z-index: unset;
 `;
 
 const Container = styled.div<{ $offset: number }>`
@@ -35,6 +28,17 @@ const Container = styled.div<{ $offset: number }>`
     height: 100%;
 `;
 
+// See: https://github.com/electron/electron/issues/5678
+// Visible all the time in the app
+export const TrafficLightDraggableWindowHeader = ({ children, isVisible = true }: Props) => {
+    const isMac = isMacOs();
+    const isDesktopApp = isDesktop();
+
+    if (!isVisible || !isMac || !isDesktopApp) return children;
+
+    return <FixForNotBeingAbleToDragWindow />;
+};
+
 // on Mac in desktop app we don't use window bar and close/maximize/minimize icons are positioned directly in the app
 export const TrafficLightOffset = ({ children, offset = 35, isVisible = true }: Props) => {
     const isMac = isMacOs();
@@ -42,11 +46,5 @@ export const TrafficLightOffset = ({ children, offset = 35, isVisible = true }: 
 
     if (!isVisible || !isMac || !isDesktopApp) return children;
 
-    return (
-        <>
-            <ThinFixForNotBeingAbleToDragWindow />
-            <ThickFixForNotBeingAbleToDragWindow />
-            <Container $offset={offset}>{children}</Container>
-        </>
-    );
+    return <Container $offset={offset}>{children}</Container>;
 };
