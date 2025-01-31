@@ -6277,6 +6277,10 @@ export default defineMessages({
         id: 'TR_LOADING',
         defaultMessage: 'Loading...',
     },
+    TR_SAVED: {
+        id: 'TR_SAVED',
+        defaultMessage: 'Saved',
+    },
     TR_BACKUP_CHECKBOX_1_TITLE: {
         id: 'TR_BACKUP_CHECKBOX_1_TITLE',
         defaultMessage:
