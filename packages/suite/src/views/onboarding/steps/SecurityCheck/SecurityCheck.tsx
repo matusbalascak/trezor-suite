@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import styled, { useTheme } from 'styled-components';
 
@@ -7,6 +7,7 @@ import { AcquiredDevice } from '@suite-common/suite-types';
 import { getConnectedDeviceStatus } from '@suite-common/suite-utils';
 import { deviceActions, selectDevices, selectSelectedDevice } from '@suite-common/wallet-core';
 import { Button, Column, Divider, H2, Icon, Text, Tooltip } from '@trezor/components';
+import { models } from '@trezor/connect/src/data/models';
 import { spacings, spacingsPx, typography } from '@trezor/theme';
 import {
     TREZOR_RESELLERS_URL,
@@ -209,6 +210,14 @@ const SecurityCheckContent = ({
         }
     }, [initialized, isRecoveryInProgress, updateAnalytics]);
 
+    const humanizedModelColor = useMemo(
+        () =>
+            device?.features?.internal_model && device?.features?.unit_color
+                ? models[device?.features?.internal_model]?.colors?.[device?.features?.unit_color]
+                : null,
+        [device],
+    );
+
     return isFailed ? (
         <SecurityCheckFail
             goBack={toggleView}
@@ -217,13 +226,17 @@ const SecurityCheckContent = ({
             supportUrl={supportUrl}
         />
     ) : (
-        <SecurityCheckLayout>
+        <SecurityCheckLayout imageMode="ROTATE">
             <Column alignItems="flex-start">
                 <DeviceNameSection>
                     <Text variant="tertiary">
                         <Translation id="TR_YOU_HAVE_CONNECTED" />
                     </Text>
-                    <DeviceName>{device?.name}</DeviceName>
+                    <DeviceName>
+                        {device?.name}
+                        {humanizedModelColor && <Text> {humanizedModelColor}</Text>}
+                    </DeviceName>
+
                     <OnboardingButtonSkip onClick={toggleView}>
                         <Translation id="TR_CONNECTED_DIFFERENT_DEVICE" />
                     </OnboardingButtonSkip>
