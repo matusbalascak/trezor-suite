@@ -11,15 +11,27 @@ import { TooltipBox, TooltipBoxProps } from './TooltipBox';
 import { TOOLTIP_DELAY_SHORT, TooltipDelay } from './TooltipDelay';
 import { TooltipContent, TooltipFloatingUi, TooltipTrigger } from './TooltipFloatingUi';
 import { intermediaryTheme } from '../../config/colors';
+import {
+    FrameProps,
+    FramePropsKeys,
+    pickAndPrepareFrameProps,
+    withFrameProps,
+} from '../../utils/frameProps';
+import { TransientProps } from '../../utils/transientProps';
 import { Icon } from '../Icon/Icon';
 
-export type Cursor = 'inherit' | 'pointer' | 'help' | 'default' | 'not-allowed';
+export type TooltipInteraction = 'none' | 'hover';
+
+export const allowedTooltipFrameProps = ['cursor'] as const satisfies FramePropsKeys[];
+export type AllowedFrameProps = Pick<FrameProps, (typeof allowedTooltipFrameProps)[number]>;
 
 const Wrapper = styled.div<{ $isFullWidth: boolean }>`
     width: ${({ $isFullWidth }) => ($isFullWidth ? '100%' : 'auto')};
 `;
 
-const Content = styled.div<{ $dashed: boolean; $isInline: boolean; $cursor: Cursor }>`
+const Content = styled.div<
+    { $dashed: boolean; $isInline: boolean } & TransientProps<AllowedFrameProps>
+>`
     display: ${({ $isInline }) => ($isInline ? 'inline-flex' : 'flex')};
     align-items: center;
     justify-content: flex-start;
@@ -27,9 +39,9 @@ const Content = styled.div<{ $dashed: boolean; $isInline: boolean; $cursor: Curs
     cursor: ${({ $cursor }) => $cursor};
     border-bottom: ${({ $dashed, theme }) =>
         $dashed && `1.5px dotted ${transparentize(0.66, theme.textSubdued)}`};
-`;
 
-export type TooltipInteraction = 'none' | 'hover';
+    ${withFrameProps}
+`;
 
 type ManagedModeProps = {
     isOpen?: boolean;
@@ -46,13 +58,12 @@ type UnmanagedModeProps = {
 };
 
 type TooltipUiProps = {
+    isActive?: boolean;
     children: ReactNode;
     className?: string;
-    disabled?: boolean;
     dashed?: boolean;
     offset?: number;
     shift?: ShiftOptions;
-    cursor?: Cursor;
     isFullWidth?: boolean;
     placement?: Placement;
     hasArrow?: boolean;
@@ -60,13 +71,14 @@ type TooltipUiProps = {
     appendTo?: HTMLElement | null | MutableRefObject<HTMLElement | null>;
     zIndex?: ZIndexValues;
     isInline?: boolean;
-};
+} & AllowedFrameProps;
 
 export type TooltipProps = (ManagedModeProps | UnmanagedModeProps) &
     TooltipUiProps &
     TooltipBoxProps;
 
 export const Tooltip = ({
+    isActive = true,
     placement = 'top',
     children,
     isLarge = false,
@@ -75,12 +87,10 @@ export const Tooltip = ({
     delayHide = TOOLTIP_DELAY_SHORT,
     maxWidth = 400,
     offset = spacings.sm,
-    cursor = 'help',
     content,
     addon,
     title,
     headerIcon,
-    disabled,
     className,
     isFullWidth = false,
     isInline = false,
@@ -90,7 +100,10 @@ export const Tooltip = ({
     appendTo,
     shift,
     zIndex = zIndices.tooltip,
+    ...rest
 }: TooltipProps) => {
+    const frameProps = pickAndPrepareFrameProps(rest, allowedTooltipFrameProps);
+
     if (!content || !children) {
         return <>{children}</>;
     }
@@ -101,6 +114,7 @@ export const Tooltip = ({
     return (
         <Wrapper $isFullWidth={isFullWidth} className={className} as={elType}>
             <TooltipFloatingUi
+                isActive={isActive}
                 placement={placement}
                 isOpen={isOpen}
                 offset={offset}
@@ -111,8 +125,9 @@ export const Tooltip = ({
                     <Content
                         $dashed={dashed}
                         $isInline={isInline}
-                        $cursor={disabled ? 'default' : cursor}
                         as={elType}
+                        {...frameProps}
+                        $cursor={frameProps.$cursor ?? 'help'}
                     >
                         {children}
                         {hasIcon && <Icon name="question" size="medium" />}
