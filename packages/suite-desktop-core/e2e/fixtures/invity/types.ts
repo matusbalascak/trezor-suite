@@ -46,6 +46,7 @@ type SellTrade = {
     maxCrypto: number;
     paymentMethod: string;
     orderId: string;
+    validUntil?: string;
 };
 
 type TradeForm = {
