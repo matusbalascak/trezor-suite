@@ -25,6 +25,8 @@ export const SafetyChecks = ({ isDeviceLocked }: SafetyChecksProps) => {
                     onClick={handleClick}
                     data-testid="@settings/device/safety-checks-button"
                     isDisabled={isDeviceLocked}
+                    isTooltipActive={isDeviceLocked}
+                    tooltipContent={<Translation id="TR_SETTINGS_DEVICE_BANNER_TITLE_REMEMBERED" />}
                 >
                     <Translation id="TR_DEVICE_SETTINGS_SAFETY_CHECKS_BUTTON" />
                 </ActionButton>

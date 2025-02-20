@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import { selectSelectedDevice } from '@suite-common/wallet-core';
-import { Button, Divider, Text } from '@trezor/components';
+import { Button, Divider, Text, Tooltip } from '@trezor/components';
 import { DeviceModelInternal } from '@trezor/connect';
 
 import { resetDevice } from 'src/actions/settings/deviceSettingsActions';
@@ -156,25 +156,41 @@ export const ResetDeviceStep = () => {
                     <SelectWrapper>
                         {canChoseBackupType && (
                             <>
-                                <SelectBackupType
-                                    selected={backupType}
-                                    onOpen={() => updateAnalytics({ wasSelectTypeOpened: true })}
-                                    onSelect={setBackupType}
-                                    isDisabled={isDeviceLocked}
-                                    data-testid="@onboarding/select-seed-type-open-dialog"
-                                />
+                                <Tooltip
+                                    isActive={isDeviceLocked}
+                                    content={
+                                        <Translation id="TR_SETTINGS_DEVICE_BANNER_TITLE_REMEMBERED" />
+                                    }
+                                >
+                                    <SelectBackupType
+                                        selected={backupType}
+                                        onOpen={() =>
+                                            updateAnalytics({ wasSelectTypeOpened: true })
+                                        }
+                                        onSelect={setBackupType}
+                                        isDisabled={isDeviceLocked}
+                                        data-testid="@onboarding/select-seed-type-open-dialog"
+                                    />
+                                </Tooltip>
                                 <Divider />
                             </>
                         )}
                         <ButtonWrapper>
-                            <Button
-                                variant="primary"
-                                isDisabled={isDeviceLocked}
-                                onClick={() => handleSubmit(backupType)}
-                                data-testid="@onboarding/select-seed-type-confirm"
+                            <Tooltip
+                                isActive={isDeviceLocked}
+                                content={
+                                    <Translation id="TR_SETTINGS_DEVICE_BANNER_TITLE_REMEMBERED" />
+                                }
                             >
-                                <Translation id="TR_ONBOARDING_SELECT_SEED_TYPE_CONFIRM" />
-                            </Button>
+                                <Button
+                                    variant="primary"
+                                    isDisabled={isDeviceLocked}
+                                    onClick={() => handleSubmit(backupType)}
+                                    data-testid="@onboarding/select-seed-type-confirm"
+                                >
+                                    <Translation id="TR_ONBOARDING_SELECT_SEED_TYPE_CONFIRM" />
+                                </Button>
+                            </Tooltip>
                         </ButtonWrapper>
                     </SelectWrapper>
                 </OptionsWrapper>

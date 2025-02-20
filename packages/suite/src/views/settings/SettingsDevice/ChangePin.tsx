@@ -27,7 +27,13 @@ export const ChangePin = ({ isDeviceLocked }: ChangePinProps) => {
                 description={<Translation id="TR_DEVICE_SETTINGS_CHANGE_PIN_DESC" />}
             />
             <ActionColumn>
-                <ActionButton onClick={handleClick} isDisabled={isDeviceLocked} variant="primary">
+                <ActionButton
+                    onClick={handleClick}
+                    isDisabled={isDeviceLocked}
+                    variant="primary"
+                    isTooltipActive={isDeviceLocked}
+                    tooltipContent={<Translation id="TR_SETTINGS_DEVICE_BANNER_TITLE_REMEMBERED" />}
+                >
                     <Translation id="TR_CHANGE_PIN" />
                 </ActionButton>
             </ActionColumn>

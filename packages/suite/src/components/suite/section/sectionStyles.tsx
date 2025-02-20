@@ -1,6 +1,9 @@
-import styled, { css } from 'styled-components';
+import { ReactNode } from 'react';
 
-import { Button, ButtonProps, Select, SelectProps, variables } from '@trezor/components';
+import styled from 'styled-components';
+
+import { Button, ButtonProps, Select, SelectProps, Tooltip, variables } from '@trezor/components';
+import { spacings } from '@trezor/theme';
 
 const { SCREEN_SIZE } = variables;
 
@@ -17,10 +20,20 @@ export const ActionColumn = styled.div`
     }
 `;
 
-export const ActionSelect = styled((props: SelectProps) => <Select {...props} size="small" />)`
-    width: 170px;
-    margin: 4px 0 4px 4px;
+type WithTooltipProps = { tooltipContent?: ReactNode; isTooltipActive?: boolean };
 
+export const ActionSelect = styled(
+    ({ tooltipContent, isTooltipActive, ...selectProps }: SelectProps & WithTooltipProps) => (
+        <Tooltip content={tooltipContent} isActive={isTooltipActive} cursor="inherit">
+            <Select
+                {...selectProps}
+                margin={{ top: spacings.xxs, bottom: spacings.xxs, left: spacings.xxs }}
+                size="small"
+                width={170}
+            />
+        </Tooltip>
+    ),
+)`
     &:not(:first-child) {
         margin-left: 8px;
     }
@@ -31,10 +44,25 @@ export const ActionSelect = styled((props: SelectProps) => <Select {...props} si
     }
 `;
 
-export const ActionButton = styled((props: ButtonProps) => <Button {...props} size="small" />)`
-    min-width: 140px;
-    margin: 4px 0 4px 4px;
-
+export const ActionButton = styled(
+    ({
+        tooltipContent,
+        isTooltipActive,
+        children,
+        ...buttonProps
+    }: WithTooltipProps & ButtonProps) => (
+        <Tooltip content={tooltipContent} isActive={isTooltipActive} cursor="inherit">
+            <Button
+                {...buttonProps}
+                size="small"
+                margin={{ top: spacings.xxs, bottom: spacings.xxs, left: spacings.xxs }}
+                minWidth={140}
+            >
+                {children}
+            </Button>
+        </Tooltip>
+    ),
+)`
     &:not(:first-child) {
         margin-left: 8px;
 
@@ -47,10 +75,4 @@ export const ActionButton = styled((props: ButtonProps) => <Button {...props} si
         width: 100%;
         margin: 0;
     }
-
-    ${props =>
-        props.isDisabled &&
-        css`
-            cursor: not-allowed;
-        `}
 `;

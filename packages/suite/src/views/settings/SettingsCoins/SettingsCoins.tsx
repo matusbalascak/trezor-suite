@@ -157,11 +157,8 @@ export const SettingsCoins = () => {
                     <motion.div {...animation} key="discover-button">
                         <DiscoveryButtonWrapper>
                             <Tooltip
-                                content={
-                                    isDeviceLocked ? (
-                                        <Translation id="TR_CONNECT_YOUR_DEVICE" />
-                                    ) : null
-                                }
+                                isActive={isDeviceLocked}
+                                content={<Translation id="TR_CONNECT_YOUR_DEVICE" />}
                             >
                                 <Button onClick={startDiscovery} isDisabled={isDeviceLocked}>
                                     <Translation id="TR_DISCOVERY_NEW_COINS" />

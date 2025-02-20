@@ -66,6 +66,8 @@ export const MultiShareBackup = ({ isDeviceLocked }: { isDeviceLocked: boolean }
                     data-testid="@settings/device/create-multi-share-backup-button"
                     onClick={handleClick}
                     isDisabled={isDeviceLocked}
+                    isTooltipActive={isDeviceLocked}
+                    tooltipContent={<Translation id="TR_SETTINGS_DEVICE_BANNER_TITLE_REMEMBERED" />}
                 >
                     <Translation id="TR_CREATE_MULTI_SHARE_BACKUP" />
                 </ActionButton>
