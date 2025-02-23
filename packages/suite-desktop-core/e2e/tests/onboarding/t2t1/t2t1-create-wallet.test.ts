@@ -1,7 +1,8 @@
 import { SeedType } from '../../../support/enums/seedType';
 import { expect, test } from '../../../support/fixtures';
 
-test.describe('Onboarding - create wallet', { tag: ['@group=device-management'] }, () => {
+// TODO: unskip after https://github.com/trezor/trezor-suite/issues/17148 is resolved
+test.describe.skip('Onboarding - create wallet', { tag: ['@group=device-management'] }, () => {
     // This test always needs to run the newest possible emulator version
     // Emulator setup: wipe: true, model: T2T1, version: 2-latest
     test.use({
@@ -21,7 +22,7 @@ test.describe('Onboarding - create wallet', { tag: ['@group=device-management'] 
         trezorUserEnvLink,
     }) => {
         await analyticsPage.passThroughAnalytics();
-        await onboardingPage.firmware.skip();
+        await onboardingPage.firmware.continueButton.click();
 
         // Will be clicking on Shamir backup button
         await onboardingPage.createWalletButton.click();
