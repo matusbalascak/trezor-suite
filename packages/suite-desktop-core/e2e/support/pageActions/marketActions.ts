@@ -1,4 +1,4 @@
-import { Locator, Page } from '@playwright/test';
+import { Locator, Page, Response } from '@playwright/test';
 
 import { FiatCurrencyCode } from '@suite-common/suite-config';
 import { regional } from '@suite-common/trading';
@@ -8,6 +8,7 @@ import { buyQuotesBTC, invityEndpoint } from '../../fixtures/invity';
 import { TrezorUserEnvLinkProxy, step } from '../common';
 import { expect } from '../customMatchers';
 import { DevicePromptActions } from './devicePromptActions';
+import { solanaUrlPattern } from '../mocks/tradingMock';
 
 const quoteProviderLocator = '@trading/offers/quote/provider';
 const quoteAmountLocator = '@trading/offers/quote/crypto-amount';
@@ -33,6 +34,23 @@ type PaymentMethods =
     | 'paypal'
     | 'bankTransfer'
     | 'revolutPay';
+
+const accountTabFilters = [
+    'all-networks',
+    'eth',
+    'pol',
+    'bsc',
+    'arb',
+    'base',
+    'op',
+    'sol',
+] as const;
+
+type AccountTabFilter = (typeof accountTabFilters)[number];
+
+function isAccountTabFilter(network: string): network is AccountTabFilter {
+    return accountTabFilters.includes(network as AccountTabFilter);
+}
 
 export class MarketActions {
     devicePrompt: DevicePromptActions;
@@ -62,12 +80,13 @@ export class MarketActions {
         this.page.getByTestId(`@trading/form/country-select/option/${countryCode}`);
     readonly accountDropdown: Locator;
     readonly accountSearchInput: Locator;
-    readonly accountTabFilter = (tab: 'all-networks' | 'eth' | 'pol' | 'bsc' | 'sol') =>
+    readonly accountTabFilter = (tab: AccountTabFilter) =>
         this.page.getByTestId(`@trading/form/select-crypto/network-tab/${tab}`);
-    readonly accountOption = (cryptoName: string, symbol?: NetworkSymbol) =>
-        this.page.getByTestId(
-            `@trading/form/select-crypto/option/${cryptoName}${symbol ? `-${symbol}` : ''}`,
-        );
+    readonly accountOption = (cryptoName: string, symbol?: NetworkSymbol) => {
+        const suffix = symbol ? `${cryptoName}-${symbol}` : cryptoName;
+
+        return this.page.getByTestId(`@trading/form/select-crypto/option/${suffix}`);
+    };
     readonly paymentMethodDropdown: Locator;
     readonly paymentMethodOption = (method: PaymentMethods) =>
         this.page.getByTestId(`@trading/form/payment-method-select/option/${method}`);
@@ -102,7 +121,11 @@ export class MarketActions {
     readonly sendButton: Locator;
     readonly swapBestOfferButton: Locator;
     readonly swapAmountInputCurrencyTicker: Locator;
-    readonly swapToCryptoInput: Locator;
+    readonly swapFromAccountInput: Locator;
+    readonly swapFromAccountOption = (cryptoName: string, symbol?: NetworkSymbol) =>
+        this.page.getByTestId(
+            `@trading/form/trade-from/select-crypto/option/${cryptoName}${symbol ? `-${symbol}` : ''}`,
+        );
     readonly swapTransactionFromAccount: Locator;
     readonly swapTransactionToAddress: Locator;
     // Transactions
@@ -179,8 +202,8 @@ export class MarketActions {
         this.swapAmountInputCurrencyTicker = this.page.getByTestId(
             '@trading/form/crypto-input/input-addon',
         );
-        this.swapToCryptoInput = this.page.getByTestId(
-            '@trading/form/trade-to/select-crypto/input',
+        this.swapFromAccountInput = this.page.getByTestId(
+            '@trading/form/trade-from/select-crypto/input',
         );
         this.swapTransactionFromAccount = page.getByTestId('@trading/exchange-send/from-account');
         this.swapTransactionToAddress = page.getByTestId('@trading/exchange-send/to-address');
@@ -223,6 +246,9 @@ export class MarketActions {
     @step()
     async selectAccount(cryptoName: string, symbol: NetworkSymbol) {
         await this.accountDropdown.click();
+        if (isAccountTabFilter(symbol)) {
+            await this.accountTabFilter(symbol).click();
+        }
         await this.accountSearchInput.fill(cryptoName);
         await this.accountOption(cryptoName, symbol).click();
     }
@@ -287,28 +313,42 @@ export class MarketActions {
     }
 
     @step()
-    async setYouSwapAmount(
-        sendStringAmount: string,
-        sendCryptoCurrency: string = 'bitcoin',
-        cryptoTicker: string = 'BTC',
-        receiveCryptoCurrency: string = 'bitcoin',
-    ) {
-        await this.accountDropdown.click();
-        await this.accountOption(sendCryptoCurrency).click();
+    async setYouSwapAmount(params: {
+        amount: string;
+        sendCurrency: string;
+        sendTicker: string;
+        receiveCurrency: string;
+        receiveSymbol: NetworkSymbol;
+        receiveNetwork: string;
+    }) {
+        await this.swapFromAccountInput.click();
+        await this.swapFromAccountOption(params.sendCurrency).click();
+        await this.selectAccount(params.receiveCurrency, params.receiveSymbol);
         // We should not fill in amount until account change takes effect = correct ticker is displayed
-        await expect(this.swapAmountInputCurrencyTicker).toHaveText(cryptoTicker);
+        await expect(this.swapAmountInputCurrencyTicker).toHaveText(params.sendTicker);
+
         const quotesRequestPromise = this.page.waitForRequest(invityEndpoint.swapQuotes);
         const quotesResponsePromise = this.page.waitForResponse(invityEndpoint.swapQuotes);
         await expect(this.bestOfferAmount).toHaveText(/0 \w+/);
-        await this.youPayCryptoInput.fill(sendStringAmount);
+        await this.youPayCryptoInput.fill(params.amount);
         await expect(quotesRequestPromise).toHavePayload({
-            receive: receiveCryptoCurrency,
-            send: sendCryptoCurrency,
-            sendStringAmount,
+            receive: params.receiveNetwork,
+            send: params.sendCurrency,
+            sendStringAmount: params.amount,
             dex: 'enable',
         });
         await quotesResponsePromise;
         await this.waitForOffersSync();
+    }
+
+    @step()
+    async clickSwapBestOfferAndWaitForFees() {
+        // The suite does not wait for these responses and it causes flakiness in automation.
+        // Toast error: 'Transaction signing error: Missing composed data' and not possible to send.
+        // So we have to wait for them manually.
+        const swapFeeCallsPromise = this.promiseForResponseSwapFeeCalls();
+        await this.swapBestOfferButton.click();
+        await swapFeeCallsPromise;
     }
 
     @step()
@@ -325,9 +365,15 @@ export class MarketActions {
     }
 
     @step()
-    async initiateSendConfirmation() {
+    async initiateSendConfirmation(options?: { confirmAlsoToken: boolean }) {
         await this.confirmOnTrezorAndSend.click();
         await expect(this.devicePrompt.sendButton).toBeDisabled();
+        await this.devicePrompt.confirmOnDevicePromptIsShown();
+        await TrezorUserEnvLinkProxy.pressYes();
+        if (options?.confirmAlsoToken) {
+            await this.devicePrompt.confirmOnDevicePromptIsShown();
+            await TrezorUserEnvLinkProxy.pressYes();
+        }
         await this.devicePrompt.confirmOnDevicePromptIsShown();
         await TrezorUserEnvLinkProxy.pressYes();
         await this.devicePrompt.confirmOnDevicePromptIsShown();
@@ -368,5 +414,31 @@ export class MarketActions {
     async waitForRedirectCompletion() {
         await expect(this.page.getByText('Buy & sell')).not.toBeVisible();
         await expect(this.page.getByText('Buy & sell')).toBeVisible({ timeout: 15000 });
+    }
+
+    @step()
+    promiseForResponseSwapFeeCalls() {
+        const isSolanaResponse = (response: Response, method: string) =>
+            new RegExp(solanaUrlPattern).test(response.url()) &&
+            response.request().postDataJSON().method === method;
+        const getFeeForMessagePromise = this.page.waitForResponse(response =>
+            isSolanaResponse(response, 'getFeeForMessage'),
+        );
+        const getRecentPrioritizationFeesPromise = this.page.waitForResponse(response =>
+            isSolanaResponse(response, 'getRecentPrioritizationFees'),
+        );
+        const simulateTransactionPromise = this.page.waitForResponse(response =>
+            isSolanaResponse(response, 'simulateTransaction'),
+        );
+
+        // Suite calls the each request twice and we have to wait for all of them
+        return Promise.all([
+            getFeeForMessagePromise,
+            getRecentPrioritizationFeesPromise,
+            simulateTransactionPromise,
+            getFeeForMessagePromise,
+            getRecentPrioritizationFeesPromise,
+            simulateTransactionPromise,
+        ]);
     }
 }

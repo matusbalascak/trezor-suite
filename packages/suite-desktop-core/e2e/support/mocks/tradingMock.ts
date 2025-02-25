@@ -9,6 +9,8 @@ import {
 } from '../../fixtures/solana-responses';
 import { step } from '../common';
 
+export const solanaUrlPattern = /^https:\/\/sol\d+\.trezor\.io\//;
+
 export class TradingMock {
     readonly watchPeriod = '00:30';
 
@@ -45,8 +47,7 @@ export class TradingMock {
     async routeSwapTrade(tradeResponse: SwapTradeResponse) {
         await this.routeInvityGeneralEndpoints();
         await this.page.route(invityEndpoint.swapTrade, async (route, request) => {
-            const modifiedTradeResponse = cloneDeep(tradeResponse);
-            modifiedTradeResponse.orderId = request.postDataJSON().trade.orderId;
+            const modifiedTradeResponse = this.updateSwapTradeResponseIds(tradeResponse, request);
             await route.fulfill({ json: modifiedTradeResponse });
         });
     }
@@ -56,8 +57,7 @@ export class TradingMock {
     // Thanks to that we are able to test the whole sell flow without sending real crypto.
     @step()
     async routeSolanaSendRequests() {
-        const solUrlPattern = /^https:\/\/sol\d+\.trezor\.io\//;
-        await this.page.route(solUrlPattern, (route, request) => {
+        await this.page.route(solanaUrlPattern, (route, request) => {
             const method = request.method();
             const postData = request.postData();
 
@@ -113,6 +113,19 @@ export class TradingMock {
         }
 
         return modifiedResponse;
+    };
+
+    updateSwapTradeResponseIds = (response: SwapTradeResponse, request: any) => {
+        const modifiedTradeResponse = cloneDeep(response);
+        const requestPayload = request.postDataJSON();
+        modifiedTradeResponse.orderId = requestPayload.trade.orderId;
+        modifiedTradeResponse.quoteId = requestPayload.trade.quoteId;
+        modifiedTradeResponse.statusUrl = modifiedTradeResponse.statusUrl.replace(
+            /[^/]+$/, // last segment of a URL path: "https://changehero.io/transaction/thmq1ylxf8gmlm96s8"
+            requestPayload.trade.orderId,
+        );
+
+        return modifiedTradeResponse;
     };
 
     validatePassphraseEnv = () => {
