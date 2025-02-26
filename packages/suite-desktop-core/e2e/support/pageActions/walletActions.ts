@@ -4,6 +4,8 @@ import { NetworkSymbol } from '@suite-common/wallet-config';
 
 import { step } from '../common';
 
+export type ExportType = 'pdf' | 'csv' | 'json';
+
 type WalletParams = {
     symbol?: NetworkSymbol;
     type?: 'normal' | 'legacy' | 'ledger';
@@ -134,5 +136,11 @@ export class WalletActions {
     async openSwapTrading(params: WalletParams = {}) {
         await this.accountButton(params).click();
         await this.openSwapTradingButton.click();
+    }
+
+    @step()
+    async exportTransactions(typeOfExport: ExportType) {
+        await this.page.getByTestId('@wallet/accounts/export-transactions/dropdown').click();
+        await this.page.getByTestId(`@wallet/accounts/export-transactions/${typeOfExport}`).click();
     }
 }
