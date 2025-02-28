@@ -42,10 +42,10 @@ export class OnboardingActions {
 
     constructor(
         public page: Page,
-        private analyticsPage: AnalyticsActions,
-        private readonly devicePrompt: DevicePromptActions,
-        private readonly model: Model,
+        readonly model: Model,
         private readonly testInfo: TestInfo,
+        private readonly devicePrompt: DevicePromptActions,
+        private readonly analyticsPage: AnalyticsActions,
     ) {
         this.backup = new BackupActions(page, devicePrompt);
         this.firmware = new FirmwareActions(page);
