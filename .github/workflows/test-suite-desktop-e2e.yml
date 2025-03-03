@@ -58,6 +58,7 @@ jobs:
         with:
           github_token: ${{ secrets.TREZOR_BOT_TOKEN }}
           pr_branch: ${{ github.head_ref }}
+          pr_created: ${{ github.event.pull_request.created_at }}
           repo: ${{ github.repository }}
           workflow_name: ${{ github.workflow }}
           job_name: "${{ github.job }} (${{ join(matrix.*, ', ') }})"
