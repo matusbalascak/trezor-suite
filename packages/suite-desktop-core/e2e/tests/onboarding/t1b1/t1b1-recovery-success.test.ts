@@ -16,19 +16,19 @@ test.describe('Onboarding - recover wallet T1B1', { tag: ['@group=device-managem
     test('Successfully recovers wallet from mnemonic', async ({
         page,
         onboardingPage,
-        analyticsPage,
+        analyticsSection,
         devicePrompt,
-        recoveryPage,
+        recoveryModal,
         trezorInput,
         trezorUserEnvLink,
     }) => {
-        await analyticsPage.passThroughAnalytics();
+        await analyticsSection.passThroughAnalytics();
 
         // Start wallet recovery process
         await onboardingPage.firmware.continueButton.click();
         await onboardingPage.recoverWalletButton.click();
-        await recoveryPage.selectWordCount(24);
-        await recoveryPage.selectBasicRecoveryButton.click();
+        await recoveryModal.selectWordCount(24);
+        await recoveryModal.selectBasicRecoveryButton.click();
         await devicePrompt.confirmOnDevicePromptIsShown();
         await page.waitForTimeout(1000);
         await trezorUserEnvLink.pressYes();
