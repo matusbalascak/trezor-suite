@@ -9,8 +9,17 @@ export enum PlaywrightProjects {
     Web = 'web',
     Desktop = 'desktop',
 }
-const timeoutCIRun = 1000 * 180;
-const timeoutLocalRun = 1000 * 60;
+
+const CI_TIMEOUT = 1000 * 180;
+const LOCAL_TIMEOUT = 1000 * 90;
+
+function getTimeout(): number {
+    if (process.env.TEST_TIMEOUT_OVERRIDE) {
+        return Number(process.env.TEST_TIMEOUT_OVERRIDE);
+    }
+
+    return process.env.GITHUB_ACTION ? CI_TIMEOUT : LOCAL_TIMEOUT;
+}
 
 const config: PlaywrightTestConfig = {
     projects: [
@@ -37,12 +46,13 @@ const config: PlaywrightTestConfig = {
         video: 'on',
         screenshot: 'on',
         testIdAttribute: 'data-testid',
+        actionTimeout: 1000 * 15,
     },
     reportSlowTests: null,
     reporter: process.env.GITHUB_ACTION
         ? [['list'], ['@currents/playwright']]
         : [['list'], ['html', { open: 'never' }]],
-    timeout: process.env.GITHUB_ACTION ? timeoutCIRun : timeoutLocalRun,
+    timeout: getTimeout(),
     outputDir: path.join(__dirname, 'test-results'),
     snapshotPathTemplate: 'snapshots/{projectName}/{testFilePath}/{arg}{ext}',
 };
