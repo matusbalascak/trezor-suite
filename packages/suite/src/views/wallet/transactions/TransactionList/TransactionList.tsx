@@ -1,12 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 import useDebounce from 'react-use/lib/useDebounce';
 
 import { getTxsPerPage } from '@suite-common/suite-utils';
-import {
-    fetchAllTransactionsForAccountThunk,
-    fetchTransactionsPageThunk,
-} from '@suite-common/wallet-core';
 import {
     advancedSearchTransactions,
     groupTransactionsByDate,
@@ -29,32 +25,44 @@ import { TransactionCandidates } from './TransactionCandidates';
 import { TransactionGroupedList } from './TransactionGroupedList';
 import { TransactionListActions } from './TransactionListActions/TransactionListActions';
 import { PendingGroupHeader } from './TransactionsGroup/PendingGroupHeader';
+import { useFetchTransactions } from './useFetchTransactions';
 
 interface TransactionListProps {
+    allTransactions: WalletAccountTransaction[];
     transactions: WalletAccountTransaction[];
     symbol: WalletAccountTransaction['symbol'];
     isLoading?: boolean;
     account: Account;
+    isPagingLimited?: boolean;
     customTotalItems?: number;
+    customNoTransactions?: ReactNode;
     isExportable?: boolean;
+    customPageFetching?: boolean;
+    onPageRequested?: (page: number) => void;
 }
 
 export const TransactionList = ({
+    allTransactions,
     transactions,
     isLoading,
     account,
     symbol,
+    isPagingLimited,
+    customNoTransactions,
     customTotalItems,
+    onPageRequested,
     isExportable = true,
+    customPageFetching,
 }: TransactionListProps) => {
     const anchor = useSelector(state => state.router.anchor);
     const dispatch = useDispatch();
     const accountMetadata = useSelector(state => selectLabelingDataForAccount(state, account.key));
 
+    const { fetchPage, fetchedAll, fetchAll } = useFetchTransactions(account, allTransactions);
+
     // Search
     const [searchQuery, setSearchQuery] = useState('');
     const [searchedTransactions, setSearchedTransactions] = useState(transactions);
-    const [hasFetchedAll, setHasFetchedAll] = useState(false);
 
     const sectionRef = useRef<HTMLDivElement>(null);
 
@@ -68,26 +76,26 @@ export const TransactionList = ({
     );
 
     useEffect(() => {
-        if (anchor && !hasFetchedAll) {
-            dispatch(
-                fetchAllTransactionsForAccountThunk({
-                    accountKey: account.key,
-                    noLoading: true,
-                }),
-            );
-            setHasFetchedAll(true);
+        if (anchor && !fetchedAll) {
+            fetchAll();
         }
-    }, [anchor, account, dispatch, hasFetchedAll]);
+    }, [anchor, account, dispatch, fetchedAll, fetchAll]);
 
     // Pagination
     const perPage = getTxsPerPage(account.networkType);
-    const startPage = findAnchorTransactionPage(transactions, perPage, anchor);
-    const [currentPage, setSelectedPage] = useState(startPage);
+    // NOTE: if there is no anchor, we can keep the page 1
+    const startPage = useMemo(
+        () => (anchor ? findAnchorTransactionPage(transactions, perPage, anchor) : null),
+        [anchor, perPage, transactions],
+    );
+    const [currentPage, setSelectedPage] = useState(startPage ?? 1);
 
     useEffect(() => {
         // reset page on account change
+        if (startPage === null) return;
         setSelectedPage(startPage);
-    }, [account.descriptor, account.symbol, startPage]);
+        onPageRequested?.(startPage);
+    }, [account.descriptor, account.symbol, onPageRequested, startPage]);
 
     const isSearching = searchQuery.trim() !== '';
     const defaultTotalItems = customTotalItems ?? account.history.total;
@@ -95,9 +103,10 @@ export const TransactionList = ({
 
     const onPageSelected = (page: number) => {
         setSelectedPage(page);
+        onPageRequested?.(page);
 
-        if (!isSearching) {
-            dispatch(fetchTransactionsPageThunk({ accountKey: account.key, page, perPage }));
+        if (!isSearching && !customPageFetching) {
+            fetchPage(page);
         }
 
         if (sectionRef.current) {
@@ -164,32 +173,37 @@ export const TransactionList = ({
                 </SkeletonStack>
             ) : (
                 <>
-                    {areTransactionsAvailable ? (
-                        <NoSearchResults />
-                    ) : (
-                        <>
-                            {pendingTxs.length > 0 && (
-                                <PendingGroupHeader txsCount={pendingTxs.length} />
-                            )}
-                            <TransactionGroupedList
-                                transactionGroups={pendingTxsByDate}
-                                symbol={symbol}
-                                account={account}
-                                isPending={true}
-                            />
-                            <TransactionGroupedList
-                                transactionGroups={confirmedTxsByDate}
-                                symbol={symbol}
-                                account={account}
-                                isPending={false}
-                            />
-                        </>
-                    )}
+                    {areTransactionsAvailable && <NoSearchResults />}
+                    {!areTransactionsAvailable &&
+                        (customNoTransactions &&
+                        confirmedTxs.length === 0 &&
+                        pendingTxs.length === 0 ? (
+                            customNoTransactions
+                        ) : (
+                            <>
+                                {pendingTxs.length > 0 && (
+                                    <PendingGroupHeader txsCount={pendingTxs.length} />
+                                )}
+                                <TransactionGroupedList
+                                    transactionGroups={pendingTxsByDate}
+                                    symbol={symbol}
+                                    account={account}
+                                    isPending={true}
+                                />
+                                <TransactionGroupedList
+                                    transactionGroups={confirmedTxsByDate}
+                                    symbol={symbol}
+                                    account={account}
+                                    isPending={false}
+                                />
+                            </>
+                        ))}
                 </>
             )}
 
             {showPagination && (
                 <Pagination
+                    isPageListLimited={Boolean(isPagingLimited)}
                     hasPages={!isRipple}
                     currentPage={currentPage}
                     isLastPage={isLastRipplePage}

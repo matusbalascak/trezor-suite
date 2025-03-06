@@ -84,9 +84,30 @@ export default defineMessages({
             'A watch-only account is a public address you’ve imported into your wallet, allowing the wallet to watch for outputs but not spend them.',
         id: 'TR_ACCOUNT_IMPORTED_ANNOUNCEMENT',
     },
+    TR_HIDE_SCAM_TRANSACTIONS_TOOLTIP: {
+        defaultMessage: 'Want a cleaner view? Try hiding suspicious transactions.',
+        id: 'TR_HIDE_SCAM_TRANSACTIONS_TOOLTIP',
+    },
+    TR_SHOW_SUSPICIOUS_TRANSACTIONS: {
+        defaultMessage: 'Show suspicious transactions',
+        id: 'TR_SHOW_SUSPICIOUS_TRANSACTIONS',
+    },
+    TR_HIDE_SUSPICIOUS_TRANSACTIONS: {
+        defaultMessage: 'Hide suspicious transactions',
+        id: 'TR_HIDE_SUSPICIOUS_TRANSACTIONS',
+    },
+    TR_HIDE_SUSPICIOUS_TRANSACTIONS_DESCRIPTION: {
+        defaultMessage: 'Crypto moves fast. Our filters might not be always perfect.',
+        id: 'TR_HIDE_SUSPICIOUS_TRANSACTIONS_DESCRIPTION',
+    },
     TR_ACCOUNT_IS_EMPTY_TITLE: {
         defaultMessage: 'No transactions',
         id: 'TR_ACCOUNT_IS_EMPTY_TITLE',
+    },
+    TR_NO_VISIBLE_TRANSACTIONS: {
+        defaultMessage:
+            'No visible transactions. Looking for something? Try showing suspicious transactions—use the filter menu above on the right. Stay cautious, some may be risky.',
+        id: 'TR_NO_VISIBLE_TRANSACTIONS',
     },
     TR_ACCOUNT_PASSPHRASE_DISABLED: {
         defaultMessage: 'Change passphrase settings to use this device',
