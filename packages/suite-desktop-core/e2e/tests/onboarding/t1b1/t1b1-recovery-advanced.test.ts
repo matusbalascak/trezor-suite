@@ -2,7 +2,7 @@ import { expect, test } from '../../../support/fixtures';
 
 test.describe('Onboarding - recover wallet T1B1', { tag: ['@group=device-management'] }, () => {
     test.use({
-        emulatorStartConf: { model: 'T1B1', version: '1-latest', wipe: true },
+        emulatorStartConf: { model: 'T1B1', wipe: true },
         setupEmulator: false,
     });
 
@@ -40,7 +40,7 @@ test.describe('Onboarding - recover wallet T1B1', { tag: ['@group=device-managem
         await devicePrompt.confirmOnDevicePromptIsShown();
 
         // Restart emulator
-        await trezorUserEnvLink.startEmu({ model: 'T1B1', version: '1-latest' });
+        await trezorUserEnvLink.startEmu({ model: 'T1B1' });
 
         // Retry recovery with basic type
         await onboardingPage.retryRecoveryButton.click();
