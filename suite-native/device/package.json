@@ -33,6 +33,7 @@
         "@trezor/connect": "workspace:*",
         "@trezor/device-utils": "workspace:*",
         "@trezor/styles": "workspace:*",
+        "@trezor/type-utils": "workspace:*",
         "@trezor/utils": "workspace:*",
         "jotai": "1.9.1",
         "lottie-react-native": "^7.1.0",
