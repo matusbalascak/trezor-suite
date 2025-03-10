@@ -18,7 +18,7 @@
         "test-unit:watch": "yarn g:jest -o --watch"
     },
     "dependencies": {
-        "@floating-ui/react": "^0.26.9",
+        "@floating-ui/react": "^0.27.5",
         "@suite-common/icons": "workspace:*",
         "@suite-common/icons-deprecated": "workspace:*",
         "@suite-common/suite-constants": "workspace:*",
@@ -34,7 +34,7 @@
         "@trezor/utils": "workspace:*",
         "date-fns": "^2.30.0",
         "framer-motion": "^11.0.3",
-        "lottie-react": "^2.4.0",
+        "lottie-react": "2.4.1",
         "polished": "^4.3.1",
         "react": "18.2.0",
         "react-date-range": "^1.4.0",
@@ -42,8 +42,8 @@
         "react-focus-lock": "^2.9.7",
         "react-intl": "^6.6.8",
         "react-markdown": "^9.0.3",
-        "react-select": "^5.8.0",
-        "react-svg": "^16.1.33",
+        "react-select": "5.10.0",
+        "react-svg": "16.3.0",
         "react-use": "^17.5.0",
         "styled-components": "^6.1.8"
     },
