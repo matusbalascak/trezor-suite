@@ -181,14 +181,37 @@ export const fetchFiatRatesThunk = createThunk(
 
         if (tickers.length === 0) return;
 
-        return dispatch(
-            updateFiatRatesThunk({
-                tickers,
-                localCurrency,
-                rateType,
-                fetchAttemptTimestamp: Date.now() as Timestamp,
-            }),
+        // NOTE: do not await it here, leave it just to return
+        // updateFiatRatesThunk is handled in the reducer and we don't need to wait for
+        // all the token fiat rates to be loaded as it slows down start of the app massively
+        // Because of that, let's chunk the number of fiat rates to be loaded
+        // and have then loaded by chunks to not overload the API
+        const FIAT_RATES_FETCH_CHUNK_SIZE = 4;
+        const tickerChunks = Array.from(
+            { length: Math.ceil(tickers.length / FIAT_RATES_FETCH_CHUNK_SIZE) },
+            (_, i) =>
+                tickers.slice(
+                    i * FIAT_RATES_FETCH_CHUNK_SIZE,
+                    (i + 1) * FIAT_RATES_FETCH_CHUNK_SIZE,
+                ),
         );
+
+        tickerChunks.reduce<Promise<any>>(
+            (chain, chunk) =>
+                chain.then(() =>
+                    dispatch(
+                        updateFiatRatesThunk({
+                            tickers: chunk,
+                            localCurrency,
+                            rateType,
+                            fetchAttemptTimestamp: Date.now() as Timestamp,
+                        }),
+                    ),
+                ),
+            Promise.resolve(),
+        );
+
+        return;
     },
 );
 
