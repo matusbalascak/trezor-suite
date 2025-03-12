@@ -86,4 +86,39 @@ export class DevicePrompt {
 
         return textsArray.map(removeWhitespaces).join('');
     }
+
+    // Serves to quickly get the text from the device display and end the test
+    @step()
+    async debugThrowJSONFromDisplay() {
+        const debugState = await TrezorUserEnvLinkProxy.getDebugState();
+        const json = JSON.parse(debugState.tokens.join(''));
+        throw new Error(`Debug JSON: ${JSON.stringify(json, null, 2)}`);
+    }
+
+    @step()
+    async getDisplayContent() {
+        const debugState = await TrezorUserEnvLinkProxy.getDebugState();
+        const json = JSON.parse(debugState.tokens.join(''));
+        if (!json || !json.header || !json.content || !json.footer) {
+            throw new Error(
+                `Display content invalid, should contain header, content, footer: ${JSON.stringify(json)}`,
+            );
+        }
+        // The structure of the JSON differs between situations.
+        // We will have to add more logic as we start validate more situations.
+        const header = {
+            title: json.header.title.text,
+            ...(json.header.subtitle && { subtitle: json.header.subtitle.text }),
+        };
+
+        if (json.content.content.paragraphs.length < 1) {
+            throw new Error(
+                `Expected at least one paragraph in display JSON, JSON: ${JSON.stringify(json.content.content.paragraphs)}`,
+            );
+        }
+        const body = json.content.content.paragraphs;
+        const footer = json.footer.instruction;
+
+        return { header, body, footer };
+    }
 }
