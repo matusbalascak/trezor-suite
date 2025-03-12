@@ -30,7 +30,7 @@ type FormatterProps<TInput, TDataContext extends DataContext> = {
 export interface Formatter<TInput, TOutput, TDataContext extends DataContext = DataContext> {
     /** Formats a value. */
     format: FormatMethod<TInput, TOutput, TDataContext>;
-    (props: FormatterProps<TInput, TDataContext>): JSX.Element | null;
+    (props: FormatterProps<TInput, TDataContext>): JSX.Element;
     /** Name of the formatter for easier debugging and profiling. */
     displayName?: string;
 }
@@ -44,8 +44,9 @@ export const makeFormatter = <TInput, TOutput, TDataContext extends DataContext 
     format: FormatDefinition<TInput, TOutput, TDataContext>,
     displayName = 'Formatter',
 ): Formatter<TInput, TOutput, TDataContext> => {
-    const FormatterComponent: Formatter<TInput, TOutput, TDataContext> = props =>
-        <>{format(props.value, props, useShouldRedactNumbers())}</> ?? null;
+    const FormatterComponent: Formatter<TInput, TOutput, TDataContext> = props => (
+        <>{format(props.value, props, useShouldRedactNumbers())}</>
+    );
     FormatterComponent.displayName = displayName;
 
     FormatterComponent.format = (value, dataContext = {}) => format(value, dataContext);
