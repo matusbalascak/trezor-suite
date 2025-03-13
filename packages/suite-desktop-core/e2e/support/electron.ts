@@ -1,7 +1,5 @@
-/* eslint-disable no-console */
-
 import { ElectronApplication, Page, _electron as electron } from '@playwright/test';
-import { readdirSync, removeSync } from 'fs-extra';
+import { createWriteStream, ensureDirSync, readdirSync, removeSync } from 'fs-extra';
 import path from 'path';
 
 import { TrezorUserEnvLink } from '@trezor/trezor-user-env-link';
@@ -18,7 +16,7 @@ type LaunchSuiteParams = {
     bridgeDaemon?: boolean;
     locale?: string;
     colorScheme?: 'light' | 'dark' | 'no-preference' | null | undefined;
-    videoFolder: string;
+    artefactFolder: string;
     viewport: { width: number; height: number };
 };
 
@@ -30,8 +28,11 @@ export type Suite = {
 const formatErrorLogMessage = (data: string) => {
     const red = '\x1b[31m';
     const reset = '\x1b[0m';
+    const bold = '\x1b[1m';
+    const unbold = '\x1b[22m';
+    const timestamp = new Date().toISOString();
 
-    return `${red}${data}${reset}`;
+    return `${timestamp} - ${bold}${red}ERROR${unbold}: ${data}${reset}`;
 };
 
 export const launchSuiteElectronApp = async (params: LaunchSuiteParams) => {
@@ -43,7 +44,8 @@ export const launchSuiteElectronApp = async (params: LaunchSuiteParams) => {
     const options = Object.assign(defaultParams, params);
 
     const appDir = path.join(__dirname, '../../../suite-desktop');
-    const logLevelArgument = `--log-level=${process.env.LOGLEVEL ?? 'error'}`;
+    // #15670 Bug in desktop app that loglevel is ignored
+    const logLevelArgument = `--log-level=${process.env.LOGLEVEL ?? 'debug'}`;
     const viewportArgument = `--width=${options.viewport.width} --height=${options.viewport.height}`;
     const disableHWAccelerationArgument = '--disable-gpu'; // to fix chromium error GetVSyncParametersIfAvailable()
     if (!options.bridgeDaemon) {
@@ -64,7 +66,7 @@ export const launchSuiteElectronApp = async (params: LaunchSuiteParams) => {
         ],
         colorScheme: params.colorScheme,
         locale: params.locale,
-        recordVideo: { dir: options.videoFolder, size: options.viewport },
+        recordVideo: { dir: options.artefactFolder, size: options.viewport },
     });
 
     const localDataDir = await electronApp.evaluate(({ app }) => app.getPath('userData'));
@@ -83,13 +85,17 @@ export const launchSuiteElectronApp = async (params: LaunchSuiteParams) => {
         });
     }
 
-    // #15670 Bug in desktop app that loglevel is ignored so we conditionally don't log to stdout
-    if (process.env.LOGLEVEL) {
-        electronApp.process().stdout?.on('data', data => console.log(data.toString()));
-    }
+    const logFilePath = path.join(options.artefactFolder, 'electron-logs.txt');
+    ensureDirSync(options.artefactFolder);
+    const logStream = createWriteStream(logFilePath, { flags: 'a' });
+
+    electronApp.process().stdout?.on('data', data => logStream.write(data.toString()));
     electronApp
         .process()
-        .stderr?.on('data', data => console.error(formatErrorLogMessage(data.toString())));
+        .stderr?.on('data', data => logStream.write(formatErrorLogMessage(data.toString())));
+    electronApp.process().on('close', () => {
+        logStream.end();
+    });
 
     await electronApp.evaluate(
         (_, [resourcesPath]) => {
@@ -110,17 +116,4 @@ export const launchSuite = async (params: LaunchSuiteParams): Promise<Suite> => 
     const window = await electronApp.firstWindow();
 
     return { electronApp, window };
-};
-
-export const getElectronVideoPath = (videoFolder: string) => {
-    const videoFilenames = readdirSync(videoFolder).filter(file => file.endsWith('.webm'));
-    if (videoFilenames.length > 1) {
-        console.error(
-            formatErrorLogMessage(
-                `Warning: More than one electron video file found in the output directory: ${videoFolder}\nAttaching only the first one: ${videoFilenames[0]}`,
-            ),
-        );
-    }
-
-    return path.join(videoFolder, videoFilenames[0]);
 };
