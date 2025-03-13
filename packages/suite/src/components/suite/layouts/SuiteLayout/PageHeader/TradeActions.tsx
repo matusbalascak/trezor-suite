@@ -1,9 +1,8 @@
-import styled, { css } from 'styled-components';
-
 import { selectSelectedDevice } from '@suite-common/wallet-core';
 import { SelectedAccountStatus } from '@suite-common/wallet-types';
-import { Row, variables } from '@trezor/components';
+import { Row } from '@trezor/components';
 import { hasBitcoinOnlyFirmware } from '@trezor/device-utils';
+import { breakpointThresholds } from '@trezor/styles';
 import { EventType, analytics } from '@trezor/suite-analytics';
 import { spacings } from '@trezor/theme';
 
@@ -13,26 +12,13 @@ import { Translation } from 'src/components/suite/Translation';
 import { HeaderActionButton } from 'src/components/suite/layouts/SuiteLayout/PageHeader/HeaderActionButton';
 import { useDispatch, useSelector } from 'src/hooks/suite';
 import { selectIsAccountTabPage, selectRouteName } from 'src/reducers/suite/routerReducer';
+import { ConditionalRender } from 'src/support/suite/ConditionalRender';
 
-// instant without computing the layout
-const ShowOnLargeDesktopWrapper = styled.div<{ $isActive?: boolean }>`
-    ${({ $isActive }) =>
-        $isActive &&
-        css`
-            ${variables.SCREEN_QUERY.BELOW_DESKTOP} {
-                display: none;
-            }
-        `}
-`;
 interface TradeActionsProps {
     selectedAccount?: SelectedAccountStatus;
-    hideBuyAndSellBelowDesktop?: boolean;
 }
 
-export const TradeActions = ({
-    selectedAccount,
-    hideBuyAndSellBelowDesktop,
-}: TradeActionsProps) => {
+export const TradeActions = ({ selectedAccount }: TradeActionsProps) => {
     const dispatch = useDispatch();
     const account = selectedAccount?.account;
     const device = useSelector(selectSelectedDevice);
@@ -62,7 +48,7 @@ export const TradeActions = ({
     return (
         <Row gap={spacings.xxs}>
             <AppNavigationTooltip>
-                <ShowOnLargeDesktopWrapper $isActive={hideBuyAndSellBelowDesktop}>
+                <ConditionalRender container="content" minWidth={breakpointThresholds.lg}>
                     <HeaderActionButton
                         icon="currencyCircleDollar"
                         onClick={() => {
@@ -77,22 +63,24 @@ export const TradeActions = ({
                     >
                         <Translation id="TR_TRADING_BUY_AND_SELL" />
                     </HeaderActionButton>
-                </ShowOnLargeDesktopWrapper>
+                </ConditionalRender>
                 {!hasBitcoinOnlyFirmware(device) && (
-                    <HeaderActionButton
-                        icon="arrowsLeftRight"
-                        onClick={() => {
-                            goToWithAnalytics('wallet-trading-exchange', {
-                                preserveParams: true,
-                            });
-                        }}
-                        data-testid="@wallet/menu/wallet-trading-exchange"
-                        variant="tertiary"
-                        size="small"
-                        isDisabled={isAccountLoading}
-                    >
-                        <Translation id="TR_TRADING_SWAP" />
-                    </HeaderActionButton>
+                    <ConditionalRender container="content" minWidth={breakpointThresholds.md}>
+                        <HeaderActionButton
+                            icon="arrowsLeftRight"
+                            onClick={() => {
+                                goToWithAnalytics('wallet-trading-exchange', {
+                                    preserveParams: true,
+                                });
+                            }}
+                            data-testid="@wallet/menu/wallet-trading-exchange"
+                            variant="tertiary"
+                            size="small"
+                            isDisabled={isAccountLoading}
+                        >
+                            <Translation id="TR_TRADING_SWAP" />
+                        </HeaderActionButton>
+                    </ConditionalRender>
                 )}
             </AppNavigationTooltip>
         </Row>

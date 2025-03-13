@@ -1,7 +1,7 @@
 import { Button, ButtonProps, IconButton, IconButtonProps } from '@trezor/components';
+import { breakpointThresholds } from '@trezor/styles';
 
-import { useSelector } from 'src/hooks/suite';
-import { selectWindowSize } from 'src/reducers/suite/windowReducer';
+import { ConditionalRender } from 'src/support/suite/ConditionalRender';
 
 export const HeaderActionButton = ({
     icon,
@@ -13,14 +13,16 @@ export const HeaderActionButton = ({
     children,
 }: Pick<ButtonProps, 'onClick' | 'data-testid' | 'variant' | 'size' | 'isDisabled' | 'children'> &
     Pick<IconButtonProps, 'icon'>) => {
-    const layoutSize = useSelector(selectWindowSize);
-
-    const isMobileLayout = layoutSize === 'TINY';
     const commonProps = { icon, onClick, 'data-testid': dataTestId, variant, size, isDisabled };
 
-    return isMobileLayout ? (
-        <IconButton {...commonProps} />
-    ) : (
-        <Button {...commonProps}>{children}</Button>
+    return (
+        <>
+            <ConditionalRender container="content" maxWidth={breakpointThresholds.sm}>
+                <IconButton {...commonProps} />
+            </ConditionalRender>
+            <ConditionalRender container="content" minWidth={breakpointThresholds.sm}>
+                <Button {...commonProps}>{children}</Button>
+            </ConditionalRender>
+        </>
     );
 };
