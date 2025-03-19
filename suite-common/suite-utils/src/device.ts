@@ -70,11 +70,13 @@ export const getStatus = (device: TrezorDevice) => {
     return 'unknown';
 };
 
-export const deviceNeedsAttention = (deviceStatus: ReturnType<typeof getStatus>) => {
+export type ConnectedDeviceStatus = ReturnType<typeof getStatus>;
+
+export const deviceNeedsAttention = (deviceStatus: ConnectedDeviceStatus) => {
     switch (deviceStatus) {
         // case 'firmware-recommended':
         // case 'unavailable': // this case is already solved in Account view @wallet-components/AccountMode/DeviceUnavailable
-        case 'bootloader':
+        case 'bootloader': // note: this is also state when the device is completely new
         case 'initialize':
         case 'seedless':
         case 'used-in-other-window':
@@ -88,11 +90,51 @@ export const deviceNeedsAttention = (deviceStatus: ReturnType<typeof getStatus>)
     }
 };
 
+export const shouldDisplayInitialWarningIcon = (deviceStatus: ConnectedDeviceStatus | null) => {
+    if (!deviceStatus) {
+        return false;
+    }
+
+    switch (deviceStatus) {
+        case 'bootloader':
+        case 'initialize':
+            return false;
+        default:
+            return true;
+    }
+};
+
+export const getDeviceStatusWarningVariant = (
+    deviceStatus: ReturnType<typeof getStatus>,
+): 'warning' | 'info' => {
+    switch (deviceStatus) {
+        case 'bootloader':
+        case 'initialize':
+            return 'info';
+        default:
+            return 'warning';
+    }
+};
+
+export const getDeviceResolveStatusCTAMessage = (deviceStatus: ReturnType<typeof getStatus>) => {
+    switch (deviceStatus) {
+        case 'bootloader':
+        case 'initialize':
+            return 'TR_SELECT_DEVICE_SHORT';
+        default:
+            return 'TR_SOLVE_ISSUE';
+    }
+};
+
 export const getDeviceNeedsAttentionMessage = (deviceStatus: ReturnType<typeof getStatus>) => {
+    // bootloader:  bootloader
+    // wiped: initialize
+    // without FW: bootloader
+
     switch (deviceStatus) {
         // case 'firmware-recommended':
         case 'bootloader':
-            return 'TR_NEEDS_ATTENTION_BOOTLOADER';
+            return 'TR_NEEDS_ATTENTION_NEW_DEVICE';
         case 'initialize':
             return 'TR_NEEDS_ATTENTION_INITIALIZE';
         case 'seedless':

@@ -2121,13 +2121,9 @@ export default defineMessages({
         defaultMessage: 'I understand',
         id: 'TR_I_UNDERSTAND_THE_RISK',
     },
-    TR_NEEDS_ATTENTION_BOOTLOADER: {
-        defaultMessage: 'Trezor is in Bootloader mode.',
-        id: 'TR_NEEDS_ATTENTION_BOOTLOADER',
-    },
-    TR_NEEDS_ATTENTION_INITIALIZE: {
-        defaultMessage: 'Trezor has not been set up.',
-        id: 'TR_NEEDS_ATTENTION_INITIALIZE',
+    TR_NEEDS_ATTENTION_NEW_DEVICE: {
+        defaultMessage: 'New Trezor connected.',
+        id: 'TR_NEEDS_ATTENTION_NEW_DEVICE',
     },
     TR_NEEDS_ATTENTION_SEEDLESS: {
         defaultMessage: "Trezor doesn't have a wallet backup.",
@@ -3073,6 +3069,10 @@ export default defineMessages({
     TR_SELECT_DEVICE: {
         defaultMessage: 'Select device',
         id: 'TR_SELECT_DEVICE',
+    },
+    TR_SELECT_DEVICE_SHORT: {
+        defaultMessage: 'Select',
+        id: 'TR_SELECT_DEVICE_SHORT',
     },
     TR_SELECT_PASSPHRASE_SOURCE: {
         defaultMessage: 'Select where to enter passphrase on {deviceLabel}',
@@ -6908,6 +6908,18 @@ export default defineMessages({
     TR_DEVICE_CONNECTED_WRONG_STATE: {
         id: 'TR_DEVICE_CONNECTED_WRONG_STATE',
         defaultMessage: 'Device detected in incorrect state',
+    },
+    TR_NEEDS_ATTENTION_INITIALIZE: {
+        id: 'TR_NEEDS_ATTENTION_INITIALIZE',
+        defaultMessage: 'Trezor has not been set up.',
+    },
+    TR_DEVICE_CONNECTED_NEW_DEVICE_STATE: {
+        id: 'TR_DEVICE_CONNECTED_NEW_DEVICE_STATE',
+        defaultMessage: 'New device connected.',
+    },
+    TR_DEVICE_CONNECTED_INITIAL_DEVICE_STATE: {
+        id: 'TR_DEVICE_CONNECTED_INITIAL_DEVICE_STATE',
+        defaultMessage: 'Not fully set up device connected.',
     },
     TR_DEVICE_CONNECTED_BOOTLOADER: {
         id: 'TR_DEVICE_CONNECTED_BOOTLOADER',
