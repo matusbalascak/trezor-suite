@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 
+import { AnimatePresence } from 'framer-motion';
 import styled from 'styled-components';
 
 import { ElevationUp, ResizableBox, useElevation } from '@trezor/components';
@@ -7,6 +8,7 @@ import { Elevation, mapElevationToBackground, mapElevationToBorder, zIndices } f
 
 import { AccountsMenu } from 'src/components/wallet/WalletLayout/AccountsMenu/AccountsMenu';
 import { useActions } from 'src/hooks/suite';
+import { useResponsiveContext } from 'src/support/suite/ResponsiveContext';
 
 import { Navigation } from './Navigation';
 import { QuickActions } from './QuickActions/QuickActions';
@@ -15,7 +17,6 @@ import { DeviceSelector } from '../DeviceSelector/DeviceSelector';
 import { UpdateNotificationBanner } from './QuickActions/Update/UpdateNotificationBanner';
 import { useUpdateStatus } from './QuickActions/Update/useUpdateStatus';
 import { setSidebarWidth as setSidebarWidthInRedux } from '../../../../../actions/suite/suiteActions';
-import { useResponsiveContext } from '../../../../../support/suite/ResponsiveContext';
 
 const Container = styled.nav<{ $elevation: Elevation }>`
     overflow-x: hidden;
@@ -42,6 +43,7 @@ export const SIDEBAR_MIN_WIDTH = 84;
 export const Sidebar = () => {
     const [closedNotificationDevice, setClosedNotificationDevice] = useState(false);
     const [closedNotificationSuite, setClosedNotificationSuite] = useState(false);
+    const [isBannerVisible, setIsBannerVisible] = useState(true);
     const { isSidebarCollapsed, setSidebarWidth, sidebarWidth } = useResponsiveContext();
 
     const { elevation } = useElevation();
@@ -93,15 +95,17 @@ export const Sidebar = () => {
                                 <Navigation />
                             </ElevationUp>
                             <AccountsMenu />
-
-                            {showUpdateBannerNotification && !isSidebarCollapsed && (
-                                <UpdateNotificationBanner
-                                    updateStatusDevice={updateStatusDevice}
-                                    updateStatusSuite={updateStatusSuite}
-                                    onClose={onNotificationBannerClosed}
-                                />
-                            )}
-
+                            <AnimatePresence onExitComplete={onNotificationBannerClosed}>
+                                {showUpdateBannerNotification &&
+                                    !isSidebarCollapsed &&
+                                    isBannerVisible && (
+                                        <UpdateNotificationBanner
+                                            updateStatusDevice={updateStatusDevice}
+                                            updateStatusSuite={updateStatusSuite}
+                                            onClose={() => setIsBannerVisible(false)}
+                                        />
+                                    )}
+                            </AnimatePresence>
                             <QuickActions
                                 isSidebarCollapsed={isSidebarCollapsed}
                                 showUpdateBannerNotification={showUpdateBannerNotification}
