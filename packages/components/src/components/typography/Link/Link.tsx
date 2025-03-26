@@ -83,11 +83,12 @@ const Link = ({
     color,
     className,
     variant,
-    typographyStyle = 'body',
+    typographyStyle = 'inherit',
     ...rest
 }: LinkProps) => {
     const textProps = pickAndPrepareTextProps({ ...rest, typographyStyle }, allowedTextTextProps);
-    const iconSize = typographyStylesBase[typographyStyle].fontSize;
+    const iconSize =
+        typographyStylesBase[typographyStyle !== 'inherit' ? typographyStyle : 'body'].fontSize;
 
     return (
         <A

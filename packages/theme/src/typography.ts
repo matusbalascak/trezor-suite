@@ -3,7 +3,7 @@ import { D, pipe } from '@mobily/ts-belt';
 import { NativeFont } from './fontFamilies';
 import { FontWeightValue, fontWeights } from './fontWeights';
 
-export const typographyStyles = [
+export const nativeTypographyStyles = [
     'titleLarge',
     'titleMedium',
     'titleSmall',
@@ -14,6 +14,9 @@ export const typographyStyles = [
     'label',
 ] as const;
 
+export const typographyStyles = [...nativeTypographyStyles, 'inherit'] as const;
+
+export type NativeTypographyStyle = (typeof nativeTypographyStyles)[number];
 export type TypographyStyle = (typeof typographyStyles)[number];
 
 export type TypographyStyles = Record<TypographyStyle, string>;
@@ -37,7 +40,7 @@ export type NativeTypographyStyles = Record<TypographyStyle, NativeTypographySty
 
 // we need unit-less typography base because RN is unit-less, we can easily add units later
 // for web we need string instead of object because styled-components syntax
-export const typographyStylesBase: Record<TypographyStyle, TypographyStyleDefinition> = {
+export const typographyStylesBase: Record<NativeTypographyStyle, TypographyStyleDefinition> = {
     titleLarge: {
         fontSize: 48,
         lineHeight: 53,
@@ -97,20 +100,28 @@ const nativeFontFamilyStyle = {
     callout: 'TTSatoshi-DemiBold',
     hint: 'TTSatoshi-Medium',
     label: 'TTSatoshi-Medium',
-} as const satisfies Record<TypographyStyle, NativeFont>;
+} as const satisfies Record<NativeTypographyStyle, NativeFont>;
 
 const prepareTypography = (): TypographyStyles =>
-    Object.fromEntries(
-        Object.entries(typographyStylesBase).map(([styleName, value]) => [
-            styleName,
-            `
+    ({
+        ...Object.fromEntries(
+            Object.entries(typographyStylesBase).map(([styleName, value]) => [
+                styleName,
+                `
             font-size: ${value.fontSize}px;
             line-height: ${value.lineHeight}px;
             font-weight: ${value.fontWeight};
             letter-spacing: ${value.letterSpacing}px;
             `,
-        ]),
-    ) as TypographyStyles;
+            ]),
+        ),
+        inherit: `
+            font-size: inherit;
+            line-height: inherit;
+            font-weight: inherit;
+            letter-spacing: inherit;
+        `,
+    }) as TypographyStyles;
 
 const prepareNativeTypography = (): NativeTypographyStyles =>
     Object.fromEntries(
@@ -120,7 +131,7 @@ const prepareNativeTypography = (): NativeTypographyStyles =>
             const nativeTypographyStyle = pipe(
                 value,
                 D.deleteKey('fontWeight'),
-                D.set('fontFamily', nativeFontFamilyStyle[styleName as TypographyStyle]),
+                D.set('fontFamily', nativeFontFamilyStyle[styleName as NativeTypographyStyle]),
             );
 
             return [styleName, nativeTypographyStyle];
