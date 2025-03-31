@@ -5,9 +5,10 @@ import { isDesktop } from '@trezor/env-utils';
 
 import { Translation, TroubleshootingTips, WebUsbButton } from 'src/components/suite';
 import {
-    TROUBLESHOOTING_TIP_BLUETOOTH_1,
-    TROUBLESHOOTING_TIP_BLUETOOTH_2,
-    TROUBLESHOOTING_TIP_BLUETOOTH_3,
+    TROUBLESHOOTING_TIP_BLUETOOTH_CABLE,
+    TROUBLESHOOTING_TIP_BLUETOOTH_PAIRING_MODE,
+    TROUBLESHOOTING_TIP_BLUETOOTH_PROXIMITY,
+    TROUBLESHOOTING_TIP_BLUETOOTH_SETTINGS,
     TROUBLESHOOTING_TIP_BRIDGE_STATUS,
     TROUBLESHOOTING_TIP_CABLE,
     TROUBLESHOOTING_TIP_DIFFERENT_COMPUTER,
@@ -71,9 +72,10 @@ export const DeviceConnect = ({ setIsBluetoothConnectOpen }: DeviceConnectProps)
 
     if (isBluetoothEnabled && isDesktop()) {
         const bluetoothItems: TroubleshootingTipsItem[] = [
-            TROUBLESHOOTING_TIP_BLUETOOTH_1,
-            TROUBLESHOOTING_TIP_BLUETOOTH_2,
-            TROUBLESHOOTING_TIP_BLUETOOTH_3,
+            TROUBLESHOOTING_TIP_BLUETOOTH_PROXIMITY,
+            TROUBLESHOOTING_TIP_BLUETOOTH_PAIRING_MODE,
+            TROUBLESHOOTING_TIP_BLUETOOTH_SETTINGS,
+            TROUBLESHOOTING_TIP_BLUETOOTH_CABLE,
         ];
 
         return (
