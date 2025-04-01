@@ -140,7 +140,10 @@ export const signTransaction =
                 ? pendingNonceBig.toString()
                 : account.misc.nonce;
 
-        if (formValues.rbfParams && typeof formValues.rbfParams.ethereumNonce === 'number') {
+        if (
+            formValues.rbfParams?.type === 'ethereum' &&
+            typeof formValues.rbfParams.ethereumNonce === 'number'
+        ) {
             nonce = formValues.rbfParams.ethereumNonce.toString();
         }
 
