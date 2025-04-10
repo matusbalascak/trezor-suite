@@ -46,30 +46,36 @@ env:
   STAGING_SUITE_SERVER_URL: "https://staging-suite.trezor.io"
 
 jobs:
-  build-web:
+  check-previous-runs:
     if: github.repository == 'trezor/trezor-suite'
+    runs-on: ubuntu-latest
+    outputs:
+      skip_tests: ${{ steps.check-previous-runs.outputs.skip_tests }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check previous runs
+        id: check-previous-runs
+        uses: "./.github/actions/check-previous-test-runs"
+        with:
+          github_token: ${{ secrets.TREZOR_BOT_TOKEN }}
+          pr_branch: ${{ github.head_ref }}
+          pr_created: ${{ github.event.pull_request.created_at }}
+          repo: ${{ github.repository }}
+          workflow_name: ${{ github.workflow }}
+          run_attempt: ${{ github.run_attempt }}
+
+  build-web:
+    needs:
+      - check-previous-runs
+    if: github.repository == 'trezor/trezor-suite' && needs.check-previous-runs.outputs.skip_tests != 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+        
       - name: Build and Upload Suite Web
         uses: ./.github/actions/build-web
-
-  load-e2e-matrix:
-    if: github.repository == 'trezor/trezor-suite'
-    outputs:
-      matrix: ${{ steps.load-matrix.outputs.matrix }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Load e2e Matrix
-        id: load-matrix
-        uses: ./.github/actions/load-e2e-matrix
-        with:
-          project: "web"
 
   post-currents-link:
     if: github.repository == 'trezor/trezor-suite' && github.event_name == 'pull_request' && github.event.action == 'opened'
@@ -99,11 +105,12 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - build-web
-      - load-e2e-matrix
-    continue-on-error: ${{ !matrix.smoke }}
+      - check-previous-runs
     strategy:
-      fail-fast: true
-      matrix: ${{ fromJson(needs.load-e2e-matrix.outputs.matrix) }}
+      fail-fast: false
+      matrix: 
+        TEST_GROUP: [1, 2, 3, 4, 5, 6, 7]
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -112,26 +119,14 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 2
 
-      - name: Check previous runs
-        id: check-previous-runs
-        if: github.event_name == 'pull_request' && github.run_attempt == 1
-        uses: "./.github/actions/check-previous-test-runs"
-        with:
-          github_token: ${{ secrets.TREZOR_BOT_TOKEN }}
-          pr_branch: ${{ github.head_ref }}
-          pr_created: ${{ github.event.pull_request.created_at }}
-          repo: ${{ github.repository }}
-          workflow_name: ${{ github.workflow }}
-          job_name: "${{ github.job }} (${{ join(matrix.*, ', ') }})"
-
       - name: Run Playwright E2E Tests
-        if: steps.check-previous-runs.outputs.skip_tests != 'true'
         uses: ./.github/actions/run-e2e-tests
         with:
           project: "web"
-          containers: ${{ matrix.CONTAINERS }}
+          containers: "trezor-user-env-unix bitcoin-regtest"
           test-group: ${{ matrix.TEST_GROUP }}
-          additional-grep: ${{ matrix.SMOKE && '(?=.*)' || '(?=.*@webOnly)' }}
+          additional-grep: "(?=.*@webOnly)"
+          fail-fast: 3
           currents-project-id: "Og0NOQ"
           currents-record-key: ${{ secrets.CURRENTS_RECORD_KEY }}
           e2e-passphrase: ${{ secrets.E2E_TEST_PASSPHRASE }}
