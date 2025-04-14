@@ -6,6 +6,7 @@ import { AnalyticsSection } from '../../support/pageObjects/analyticsSection';
 import { DashboardPage } from '../../support/pageObjects/dashboardPage';
 import { DevicePrompt } from '../../support/pageObjects/devicePrompt';
 import { OnboardingPage } from '../../support/pageObjects/onboarding/onboardingPage';
+import { enhancePage } from '../../support/testExtends/enhancePage';
 
 const stealBridgeSession = async () => {
     await test.step('Steal Bridge session', async () => {
@@ -36,7 +37,6 @@ test.describe('Multiple sessions', { tag: ['@group=suite'] }, () => {
     for (const { testName, enableViewOnly } of testCases) {
         test(testName, async ({ page, onboardingPage, dashboardPage, devicePrompt }) => {
             await onboardingPage.completeOnboarding({ enableViewOnly });
-            await dashboardPage.discoveryShouldFinish();
             await test.step('Bridge session taken by another suite session', async () => {
                 await stealBridgeSession();
                 await expect(dashboardPage.deviceStatus).toHaveText('Refresh');
@@ -89,9 +89,9 @@ test.describe('Multiple sessions', { tag: ['@group=suite'] }, () => {
         { tag: ['@webOnly'] },
         async ({ context, onboardingPage, dashboardPage }, testInfo) => {
             await onboardingPage.completeOnboarding();
-            await dashboardPage.discoveryShouldFinish();
 
             const pageTwo = await context.newPage();
+            enhancePage(pageTwo);
             await pageTwo.context().addInitScript(() => {
                 window.Playwright = true;
             });
@@ -107,7 +107,6 @@ test.describe('Multiple sessions', { tag: ['@group=suite'] }, () => {
             );
             await onboardingPageTwo.completeOnboarding();
             const dashboardPageTwo = new DashboardPage(pageTwo, devicePromptTwo);
-            await dashboardPageTwo.discoveryShouldFinish();
             await expect(dashboardPageTwo.deviceStatus).toHaveText('Connected');
             await expect(dashboardPage.deviceStatus).toHaveText('Refresh');
 
