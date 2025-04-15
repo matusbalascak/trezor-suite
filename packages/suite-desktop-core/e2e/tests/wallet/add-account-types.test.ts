@@ -25,8 +25,8 @@ test.describe('Account types suite', { tag: ['@group=wallet'] }, () => {
      */
     test('Add-account-types-btc-like', async ({
         page,
-        settingsPage,
         dashboardPage,
+        settingsPage,
         walletPage,
     }) => {
         const accountTypes = [
@@ -45,15 +45,14 @@ test.describe('Account types suite', { tag: ['@group=wallet'] }, () => {
             },
         ];
 
-        await settingsPage.navigateTo('coins');
-        for (const { coin } of accountTypes.filter(
-            ({ coin: coinSymbol }) => coinSymbol !== 'btc',
-        )) {
-            await settingsPage.coins.enableNetwork(coin as NetworkSymbol);
-        }
+        const coinsWithoutBTC = accountTypes
+            .map(account => account.coin)
+            .filter(coin => coin !== 'btc');
 
-        await dashboardPage.dashboardMenuButton.click();
-        await dashboardPage.discoveryShouldFinish();
+        await settingsPage.changeNetworks({
+            enableNetworks: coinsWithoutBTC as NetworkSymbol[],
+        });
+        await dashboardPage.navigateTo();
 
         const chevrons = await walletPage.accountChevron.all();
         for (const chevron of chevrons) {
@@ -104,7 +103,6 @@ test.describe('Account types suite', { tag: ['@group=wallet'] }, () => {
      */
     test('Add-account-types-non-BTC-coins', async ({
         page,
-        dashboardPage,
         settingsPage,
         walletPage,
         analytics,
@@ -113,15 +111,10 @@ test.describe('Account types suite', { tag: ['@group=wallet'] }, () => {
             { symbol: 'ada', path: `m/1852'/1815'/1'` },
             { symbol: 'eth', path: `m/44'/60'/0'/0/1` },
         ];
-
-        await settingsPage.navigateTo('coins');
-        for (const coin of coins) {
-            await settingsPage.coins.enableNetwork(coin.symbol as NetworkSymbol);
-        }
-
-        await dashboardPage.dashboardMenuButton.click();
+        await settingsPage.changeNetworks({
+            enableNetworks: coins.map(coin => coin.symbol) as NetworkSymbol[],
+        });
         await walletPage.openAccount();
-        await dashboardPage.discoveryShouldFinish();
 
         analytics.interceptAnalytics();
         await page.getByTestId(`@account-menu/filter-accounts`).click();
@@ -138,7 +131,7 @@ test.describe('Account types suite', { tag: ['@group=wallet'] }, () => {
                 await expect(page.getByTestId('@modal')).toBeVisible();
                 await page.getByTestId(`@settings/wallet/network/${coin.symbol}`).click();
                 await page.getByTestId('@add-account').click();
-                await dashboardPage.discoveryShouldFinish();
+                await page.discoveryShouldFinish();
 
                 const numberOfAccountsAfter = await page
                     .getByTestId('@account-menu/normal/group')
