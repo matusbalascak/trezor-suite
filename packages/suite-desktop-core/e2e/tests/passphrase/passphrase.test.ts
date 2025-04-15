@@ -1,6 +1,8 @@
 import { EventType } from '@trezor/suite-analytics';
 
+import { createTestAnnotation } from '../../support/annotations';
 import { formatAddress } from '../../support/common';
+import { TestCategory, TestPriority } from '../../support/enums/testAnnotations';
 import { expect, test } from '../../support/fixtures';
 import { ExtractByEventType } from '../../support/types';
 
@@ -13,90 +15,94 @@ test.describe('Passphrase', { tag: ['@group=passphrase'] }, () => {
         await onboardingPage.completeOnboarding();
     });
 
-    // add hidden wallet (abc)
-    // check 1st address
-    // switch to 2nd hidden wallet (def)
-    // check 1st address
-    // go back to 1st hidden wallet
-    // check confirm passphrase appears.
-    test('basic flow', async ({
-        page,
-        analytics,
-        devicePrompt,
-        dashboardPage,
-        walletPage,
-        trezorUserEnvLink,
-    }) => {
-        // add 1st hidden wallet
-        await dashboardPage.openDeviceSwitcher();
-        await dashboardPage.addUnusedHiddenWallet('abc');
+    test(
+        'basic flow',
+        {
+            annotation: createTestAnnotation({
+                testCase:
+                    'Verify that a user can successfully add and switch between hidden wallets, and confirm passphrase.',
+                category: TestCategory.Wallets,
+                priority: TestPriority.High,
+            }),
+        },
+        async ({ page, analytics, devicePrompt, dashboardPage, walletPage, trezorUserEnvLink }) => {
+            // add 1st hidden wallet
+            await dashboardPage.openDeviceSwitcher();
+            await dashboardPage.addUnusedHiddenWallet('abc');
 
-        await analytics.interceptAnalytics();
+            await analytics.interceptAnalytics();
 
-        await walletPage.openAccount({
-            symbol: 'btc',
-            type: 'normal',
-            atIndex: 0,
-        });
-        await walletPage.receiveButton.click();
-        await walletPage.revealAddressButton.click();
-        await expect(page.getByTestId('@modal/output-value')).toHaveText(formatAddress(abcAddr));
-        await devicePrompt.confirmOnDevicePromptIsShown();
-        await expect(devicePrompt).toDisplayReceiveAddress(abcAddr);
-        await trezorUserEnvLink.pressYes(); // confirm address
+            await walletPage.openAccount({
+                symbol: 'btc',
+                type: 'normal',
+                atIndex: 0,
+            });
+            await walletPage.receiveButton.click();
+            await walletPage.revealAddressButton.click();
+            await expect(page.getByTestId('@modal/output-value')).toHaveText(
+                formatAddress(abcAddr),
+            );
+            await devicePrompt.confirmOnDevicePromptIsShown();
+            await expect(devicePrompt).toDisplayReceiveAddress(abcAddr);
+            await trezorUserEnvLink.pressYes(); // confirm address
 
-        await expect(page.getByTestId('@metadata/copy-address-button')).toBeVisible();
-        await expect(page.getByTestId('@metadata/copy-address-button')).not.toBeDisabled();
+            await expect(page.getByTestId('@metadata/copy-address-button')).toBeVisible();
+            await expect(page.getByTestId('@metadata/copy-address-button')).not.toBeDisabled();
 
-        await page.getByTestId('@modal/close-button').click();
+            await page.getByTestId('@modal/close-button').click();
 
-        // add 2nd hidden wallet
-        await dashboardPage.openDeviceSwitcher();
-        await dashboardPage.addUnusedHiddenWallet('def');
+            // add 2nd hidden wallet
+            await dashboardPage.openDeviceSwitcher();
+            await dashboardPage.addUnusedHiddenWallet('def');
 
-        const selectWalletEvent = analytics.findAnalyticsEventByType<
-            ExtractByEventType<EventType.SelectWalletType>
-        >(EventType.SelectWalletType);
-        expect(selectWalletEvent.type).toEqual('hidden');
+            const selectWalletEvent = analytics.findAnalyticsEventByType<
+                ExtractByEventType<EventType.SelectWalletType>
+            >(EventType.SelectWalletType);
+            expect(selectWalletEvent.type).toEqual('hidden');
 
-        // go to receive
-        await walletPage.receiveButton.click();
+            // go to receive
+            await walletPage.receiveButton.click();
 
-        // no address should be in table yet
-        await expect(page.getByTestId('@wallet/receive/used-address/0')).not.toBeVisible();
-        await expect(walletPage.revealAddressButton).not.toBeDisabled();
+            // no address should be in table yet
+            await expect(page.getByTestId('@wallet/receive/used-address/0')).not.toBeVisible();
+            await expect(walletPage.revealAddressButton).not.toBeDisabled();
 
-        await walletPage.revealAddressButton.click();
-        await expect(page.getByTestId('@modal/output-value')).toHaveText(formatAddress(defAddr));
-        await devicePrompt.confirmOnDevicePromptIsShown();
-        await expect(devicePrompt).toDisplayReceiveAddress(defAddr);
-        await trezorUserEnvLink.pressYes(); // confirm address
+            await walletPage.revealAddressButton.click();
+            await expect(page.getByTestId('@modal/output-value')).toHaveText(
+                formatAddress(defAddr),
+            );
+            await devicePrompt.confirmOnDevicePromptIsShown();
+            await expect(devicePrompt).toDisplayReceiveAddress(defAddr);
+            await trezorUserEnvLink.pressYes(); // confirm address
 
-        await expect(page.getByTestId('@metadata/copy-address-button')).toBeVisible();
-        await expect(page.getByTestId('@metadata/copy-address-button')).not.toBeDisabled();
+            await expect(page.getByTestId('@metadata/copy-address-button')).toBeVisible();
+            await expect(page.getByTestId('@metadata/copy-address-button')).not.toBeDisabled();
 
-        await page.getByTestId('@modal/close-button').click();
+            await page.getByTestId('@modal/close-button').click();
 
-        // now go back to the 1st wallet, which is cached in device
-        await dashboardPage.openDeviceSwitcher();
-        await dashboardPage.walletAtIndex(1).click();
-        await walletPage.receiveButton.click();
+            // now go back to the 1st wallet, which is cached in device
+            await dashboardPage.openDeviceSwitcher();
+            await dashboardPage.walletAtIndex(1).click();
+            await walletPage.receiveButton.click();
 
-        // no address should be in table yet
-        await expect(page.getByTestId('@wallet/receive/used-address/0')).not.toBeVisible();
-        await expect(walletPage.revealAddressButton).not.toBeDisabled();
+            // no address should be in table yet
+            await expect(page.getByTestId('@wallet/receive/used-address/0')).not.toBeVisible();
+            await expect(walletPage.revealAddressButton).not.toBeDisabled();
 
-        await walletPage.revealAddressButton.click();
-        await expect(page.getByTestId('@modal/output-value')).toHaveText(formatAddress(abcAddr));
-        await devicePrompt.confirmOnDevicePromptIsShown();
-        await expect(devicePrompt).toDisplayReceiveAddress(abcAddr);
-        await trezorUserEnvLink.pressYes(); // confirm address
+            await walletPage.revealAddressButton.click();
+            await expect(page.getByTestId('@modal/output-value')).toHaveText(
+                formatAddress(abcAddr),
+            );
+            await devicePrompt.confirmOnDevicePromptIsShown();
+            await expect(devicePrompt).toDisplayReceiveAddress(abcAddr);
+            await trezorUserEnvLink.pressYes(); // confirm address
 
-        await expect(page.getByTestId('@metadata/copy-address-button')).toBeVisible();
-        await expect(page.getByTestId('@metadata/copy-address-button')).not.toBeDisabled();
+            await expect(page.getByTestId('@metadata/copy-address-button')).toBeVisible();
+            await expect(page.getByTestId('@metadata/copy-address-button')).not.toBeDisabled();
 
-        await page.getByTestId('@modal/close-button').click();
-    });
+            await page.getByTestId('@modal/close-button').click();
+        },
+    );
 
     // add hidden wallet (abc)
     // fail to confirm passphrase
