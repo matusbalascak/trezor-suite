@@ -15,6 +15,8 @@
         "test:orchestrated:e2e:desktop": "yarn xvfb-maybe -- pwc-p --config=./e2e/playwright.config.ts --project=desktop",
         "test:e2e:web": "yarn xvfb-maybe -- playwright test --config=./e2e/playwright.config.ts --project=web",
         "test:e2e:desktop": "yarn xvfb-maybe -- playwright test --config=./e2e/playwright.config.ts --project=desktop",
+        "test:e2e:web:report": "yarn xvfb-maybe -- playwright test --config=./e2e/playwright.config.ts --project=web --reporter=./e2e/support/reporters/gitHubReporter.ts",
+        "test:e2e:desktop:report": "yarn xvfb-maybe -- playwright test --config=./e2e/playwright.config.ts --project=desktop --reporter=./e2e/support/reporters/gitHubReporter.ts",
         "test:e2e:update-snapshots": "yarn xvfb-maybe -- playwright test --config=./e2e/playwright.config.ts --grep @snapshot --update-snapshots"
     },
     "dependencies": {
@@ -53,6 +55,7 @@
         "@currents/playwright": "^1.11.3",
         "@electron/fuses": "^1.8.0",
         "@electron/notarize": "2.5.0",
+        "@octokit/rest": "^21.1.1",
         "@playwright/browser-chromium": "^1.51.0",
         "@playwright/browser-firefox": "^1.51.0",
         "@playwright/browser-webkit": "^1.51.0",
