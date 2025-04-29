@@ -64,6 +64,7 @@ export const ConnectAddressConfirmation = () => {
                             onClick={onFinish}
                             size="medium"
                             data-testid="@connect-address-confirmation/close-button"
+                            isDisabled={isLoading}
                         >
                             <Translation id="TR_CLOSE" />
                         </Modal.Button>
