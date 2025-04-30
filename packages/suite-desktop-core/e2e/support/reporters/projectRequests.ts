@@ -53,8 +53,6 @@ export class ProjectRequests {
     ) {}
 
     async createProject(ownerId: string, teamId: string, projectName: string): Promise<string> {
-        this.logger.log(`Creating project "${projectName}" with owner ID: ${ownerId}`);
-
         const mutation = `
             mutation {
                 createProjectV2(
@@ -111,6 +109,9 @@ export class ProjectRequests {
               ... on ProjectV2SingleSelectField {
                 id
               }
+              ... on ProjectV2FieldCommon {
+                id
+              }
             }
         } 
       }`;
@@ -131,7 +132,7 @@ export class ProjectRequests {
         const query = `
             query {
               organization(login: "${organization}") {
-                projectsV2(first: 30, query: "${projectName}", orderBy: {field: NUMBER, direction: ASC}) {
+                projectsV2(query: "${projectName}", first: 30, orderBy: {field: NUMBER, direction: ASC}) {
                   nodes {
                     id
                     title

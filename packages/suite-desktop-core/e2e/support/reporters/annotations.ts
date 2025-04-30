@@ -80,6 +80,15 @@ export class TestReportProvider {
     get testCase(): string {
         return this.getAnnotation(TestAnnotationType.TestCase, this.test.title);
     }
+
+    get releaseBuild(): string {
+        if (!process.env.RELEASE_BUILD) {
+            throw new Error('RELEASE_BUILD is not set');
+        }
+
+        return process.env.RELEASE_BUILD;
+    }
+
     get status(): string {
         // This condition covers manual and automated tests that are skipped
         if (this.test.outcome() === 'skipped') {
@@ -117,14 +126,21 @@ export class TestReportProvider {
         return this.getAnnotation(TestAnnotationType.Stream, this.defaults.stream);
     }
 
+    get testProject(): string {
+        const project = this.test.parent.project();
+        if (!project) {
+            throw new Error('Test project is not defined');
+        }
+
+        return project.name;
+    }
+
     get testRun(): string {
         if (this.isManual) {
             return 'Manual';
         } else {
             // Web or Desktop
-            const projectType = this.test.parent.project()?.name;
-
-            return capitalizeFirstLetter(projectType ?? 'Automated');
+            return capitalizeFirstLetter(this.testProject);
         }
     }
 
@@ -144,6 +160,10 @@ export class TestReportProvider {
         return this.test.tags.some(tag => tag.startsWith('@group=manual'));
     }
 
+    get isRetryAttempt(): boolean {
+        return this.test.results.length > 1;
+    }
+
     get bodyDescription(): string {
         const sections = [];
 
@@ -153,7 +173,7 @@ export class TestReportProvider {
                 sections.push(`## ${annotation.name}\n${value}`);
             }
         } else {
-            sections.push('## Automated Test');
+            sections.push(`## Automated Test\nID: ${this.test.id}`);
         }
 
         return sections.join('\n---\n');
@@ -173,6 +193,7 @@ export class TestReportProvider {
         // This is the downside, we need to record of all our annotation getters here
         const getters: Record<string, () => string> = {
             testCase: () => this.testCase,
+            releaseBuild: () => this.releaseBuild,
             prerequisites: () => this.prerequisites,
             steps: () => this.steps,
             category: () => this.category,

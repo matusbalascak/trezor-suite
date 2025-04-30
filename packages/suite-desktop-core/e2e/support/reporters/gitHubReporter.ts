@@ -7,8 +7,8 @@ import { TestReportProvider } from './annotations';
 import { GitHubProject } from './gitHubProject';
 import { IssueRequests } from './issueRequests';
 import { LoggingFunctions, ProjectField } from './types';
+import { statusAnnotation } from '../enums/testAnnotations';
 
-const VERBOSE = true;
 const RETRY_CONF = {
     attempts: 3,
     gap: 500,
@@ -28,11 +28,12 @@ class GitHubReporter implements Reporter, LoggingFunctions {
     private pendingOperations: Promise<any>[] = [];
     private cachedFields: ProjectField[] | null = null;
     private initState: InitializationState = InitializationState.NOT_STARTED;
+    private createdIssuesMap: Map<string, string> = new Map();
 
     private initializationPromise: Promise<void> | null = null;
 
     log(...args: any[]): void {
-        if (VERBOSE) {
+        if (process.env.GITHUB_REPORTER_VERBOSE) {
             console.warn('[GitHub Reporter]', ...args);
         }
     }
@@ -42,7 +43,7 @@ class GitHubReporter implements Reporter, LoggingFunctions {
     }
 
     logResponse(label: string, response: any): void {
-        if (VERBOSE) {
+        if (process.env.GITHUB_REPORTER_VERBOSE) {
             console.warn(`[GitHub Reporter] ${label}:`);
             console.warn(JSON.stringify(response, null, 2));
         }
@@ -105,8 +106,14 @@ class GitHubReporter implements Reporter, LoggingFunctions {
                 throw error; // Critical error, rethrow to stop execution
             }
 
-            await this.gitHubProject.init();
-            this.initState = InitializationState.COMPLETED;
+            try {
+                await this.gitHubProject.init();
+                this.initState = InitializationState.COMPLETED;
+            } catch (error) {
+                this.initState = InitializationState.FAILED;
+                this.logError('Failed to initialize GitHub Project.');
+                throw error; // Critical error, rethrow to stop execution
+            }
         })();
         this.initializationPromise = initPromise;
 
@@ -124,41 +131,11 @@ class GitHubReporter implements Reporter, LoggingFunctions {
                 const report = new TestReportProvider(test);
 
                 try {
-                    const issueNodeId = await scheduleAction(() => {
-                        this.log(`Creating GitHub draft issue for test "${test.title}"...`);
-
-                        return this.issueRequests.createDraftIssueInProject(
-                            this.gitHubProject.id,
-                            report.testCase,
-                            report.bodyDescription,
-                        );
-                    }, RETRY_CONF);
-                    this.log(`[${issueNodeId}] Successfully created issue "${test.title}"`);
-
-                    const fields = await scheduleAction(() => this.getProjectFields(), RETRY_CONF);
-
-                    for (const { name, value } of report.projectValues) {
-                        const { fieldId, valueOrOptionId } = this.resolveFieldAndValue(
-                            fields,
-                            name,
-                            value,
-                        );
-                        await scheduleAction(() => {
-                            this.log(`[${issueNodeId}] Updating field ${name}:"${value}"...`);
-
-                            return this.issueRequests.setItemValue(
-                                this.gitHubProject.id,
-                                issueNodeId,
-                                fieldId,
-                                valueOrOptionId,
-                            );
-                        }, RETRY_CONF);
-                        this.log(`[${issueNodeId}] Successfully updated field ${name}:"${value}"`);
+                    if (report.isRetryAttempt && this.createdIssuesMap.has(test.id)) {
+                        await this.updateIssue(test, report);
+                    } else {
+                        await this.createIssue(test, report);
                     }
-
-                    this.log(
-                        `[${issueNodeId}] Successfully recorded test result for "${test.title}"`,
-                    );
                 } catch (error) {
                     this.logError(`Failed to process test end for "${test.title}":`, error);
                     // Non-Critical error, no need to rethrow
@@ -194,10 +171,70 @@ class GitHubReporter implements Reporter, LoggingFunctions {
         }
     }
 
+    private async createIssue(test: TestCase, report: TestReportProvider): Promise<void> {
+        const issueNodeId = await scheduleAction(() => {
+            this.log(`Creating GitHub draft issue for test "${test.title}"...`);
+
+            return this.issueRequests.createDraftIssueInProject(
+                this.gitHubProject.id,
+                report.testCase,
+                report.bodyDescription,
+            );
+        }, RETRY_CONF);
+
+        this.createdIssuesMap.set(test.id, issueNodeId);
+        this.log(`[${issueNodeId}] Successfully created issue "${test.title}"`);
+
+        const fields = await scheduleAction(() => this.getProjectFields(), RETRY_CONF);
+
+        for (const { name, value } of report.projectValues) {
+            const { fieldId, valueOrOptionId } = this.resolveFieldAndValue(fields, name, value);
+            await scheduleAction(() => {
+                this.log(`[${issueNodeId}] Updating field ${name}:"${value}"...`);
+
+                return this.issueRequests.setItemValue(
+                    this.gitHubProject.id,
+                    issueNodeId,
+                    fieldId,
+                    valueOrOptionId,
+                );
+            }, RETRY_CONF);
+            this.log(`[${issueNodeId}] Successfully updated field ${name}:"${value}"`);
+        }
+
+        this.log(`[${issueNodeId}] Successfully recorded test result for "${test.title}"`);
+    }
+
+    private async updateIssue(test: TestCase, report: TestReportProvider): Promise<void> {
+        const issueNodeId = this.createdIssuesMap.get(test.id);
+        if (!issueNodeId) {
+            throw new Error(`Issue ID not found for test retried test "${test.title}"`);
+        }
+        this.log(
+            `[${issueNodeId}] Updating GitHub draft issue with a retry of test "${test.title}"...`,
+        );
+
+        const fields = await scheduleAction(() => this.getProjectFields(), RETRY_CONF);
+
+        this.log(`[${issueNodeId}] Updating field Status:"${report.status}"...`);
+        const { fieldId: statusFieldId, valueOrOptionId: statusOptionId } =
+            this.resolveFieldAndValue(fields, statusAnnotation.name, report.status);
+        await scheduleAction(
+            () =>
+                this.issueRequests.setItemValue(
+                    this.gitHubProject.id,
+                    issueNodeId,
+                    statusFieldId,
+                    statusOptionId,
+                ),
+            RETRY_CONF,
+        );
+        this.log(`[${issueNodeId}] Successfully updated field Status:"${report.status}"`);
+        this.log(`[${issueNodeId}] Successfully updated test result for "${test.title}"`);
+    }
+
     private async getProjectFields(): Promise<ProjectField[]> {
         if (this.cachedFields) {
-            this.log('Using cached project fields');
-
             return this.cachedFields;
         }
 
