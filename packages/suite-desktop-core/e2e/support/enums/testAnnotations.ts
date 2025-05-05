@@ -85,6 +85,24 @@ export const TestStatusColors: Record<TestStatus, string> = {
     [TestStatus.Skipped]: 'GRAY',
 };
 
+export enum TestOsMatrix {
+    MacOSArm = 'macOS (ARM)',
+    MacOSIntel = 'macOS (Intel)',
+    Linux = 'Linux',
+    Windows = 'Windows',
+    Android = 'Android',
+    NotDefined = 'Not Defined',
+}
+
+export const TestOsEmoticons: Record<TestOsMatrix, string> = {
+    [TestOsMatrix.MacOSArm]: '🍏',
+    [TestOsMatrix.MacOSIntel]: '🍎',
+    [TestOsMatrix.Linux]: '🐧',
+    [TestOsMatrix.Windows]: '🪟',
+    [TestOsMatrix.Android]: '🤖',
+    [TestOsMatrix.NotDefined]: '❓',
+};
+
 export enum DeviceModel {
     T1B1 = 'T1B1',
     T2T1 = 'T2T1',
@@ -173,6 +191,14 @@ export const priorityAnnotation: BaseAnnotation = {
     optionsColors: TestPriorityColors,
 };
 
+export const osMatrixAnnotation: BaseAnnotation = {
+    name: 'OS Matrix',
+    key: 'osMatrix',
+    annotationType: TestAnnotationType.OsMatrix,
+    valueType: 'SINGLE_SELECT',
+    valueOptions: Object.values(TestOsMatrix),
+};
+
 export const deviceModelAnnotation: BaseAnnotation = {
     name: 'Device Model',
     key: 'deviceModel',
@@ -195,6 +221,7 @@ export const annotationsForProjectFields = [
     releaseBuildAnnotation,
     statusAnnotation,
     streamAnnotation,
+    osMatrixAnnotation,
     testRunAnnotation,
     priorityAnnotation,
     deviceModelAnnotation,
@@ -209,4 +236,6 @@ export const annotationsAddedToTest = [
     streamAnnotation,
     categoryAnnotation,
     priorityAnnotation,
+    deviceModelAnnotation,
+    osMatrixAnnotation,
 ];
