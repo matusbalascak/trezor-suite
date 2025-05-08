@@ -12,11 +12,11 @@ import {
     selectValidTradingBuyQuotes,
 } from '@suite-common/trading';
 import { getNetwork } from '@suite-common/wallet-config';
+import { WalletSettingsRootState, selectIsAmountInSats } from '@suite-common/wallet-core';
 import { amountToSmallestUnit } from '@suite-common/wallet-utils';
 import { EventType, analytics } from '@suite-native/analytics';
 import { useForm } from '@suite-native/forms';
 import { useTranslate } from '@suite-native/intl';
-import { SettingsSliceRootState, selectIsAmountInSats } from '@suite-native/settings';
 
 import { MAX_CRYPTO_DECIMALS, MAX_FIAT_DECIMALS } from '../consts';
 import {
@@ -168,7 +168,7 @@ const useBuyQuoteChangeEffect = (form: TradingBuyForm) => {
     const quote = watch('quote');
     const symbol = getSelectedSymbolFromBuyForm(form);
 
-    const isAmountInSats = useSelector((state: SettingsSliceRootState) =>
+    const isAmountInSats = useSelector((state: WalletSettingsRootState) =>
         selectIsAmountInSats(state, symbol),
     );
 
