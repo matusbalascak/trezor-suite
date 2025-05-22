@@ -4,12 +4,15 @@ import type { GuideNode } from '@suite-common/suite-types';
 
 import type { Locale } from 'src/config/suite/languages';
 
-export const loadPageMarkdownFile = async (id: string, language = 'en'): Promise<string> => {
-    const file = await import(/* @vite-ignore */ `@trezor/suite-data/files/guide/${language}${id}`);
-    const md = await file.default;
+export async function loadPageMarkdownFile(id: string, language = 'en'): Promise<string> {
+    const res = await fetch(`/static/guide/${language}${id}`);
 
-    return md;
-};
+    if (!res.ok) {
+        throw new Error(`[${res.status}] Failed to fetch article "${id}" for "${language}"`);
+    }
+
+    return res.text();
+}
 
 export const useGuideLoadArticle = (currentNode: GuideNode | null, language: Locale = 'en') => {
     const [markdown, setMarkdown] = useState<string>();
