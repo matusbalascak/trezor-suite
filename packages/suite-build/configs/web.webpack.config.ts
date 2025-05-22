@@ -21,7 +21,7 @@ const config: webpack.Configuration = {
     },
     plugins: [
         new CopyWebpackPlugin({
-            patterns: ['browser-detection', 'fonts', 'images', 'oauth', 'videos', 'guide/assets']
+            patterns: ['browser-detection', 'fonts', 'images', 'oauth', 'videos', 'guide']
                 .map(dir => ({
                     from: path.join(__dirname, '..', '..', 'suite-data', 'files', dir),
                     to: path.join(baseDir, 'build', 'static', dir),
