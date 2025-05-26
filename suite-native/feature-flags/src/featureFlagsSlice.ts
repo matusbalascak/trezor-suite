@@ -5,6 +5,7 @@ import { isAndroid } from '@trezor/env-utils';
 export const FeatureFlag = {
     IsDeviceConnectEnabled: 'isDeviceConnectEnabled',
     IsCardanoSendEnabled: 'isCardanoSendEnabled',
+    IsStellarSupportEnabled: 'isStellarSupportEnabled',
     IsRegtestEnabled: 'isRegtestEnabled',
     IsConnectPopupEnabled: 'isConnectPopupEnabled',
     IsDebugKeysAllowed: 'isDebugKeysAllowed',
@@ -29,6 +30,8 @@ export const featureFlagsInitialState: FeatureFlagsState = {
         (isAndroid() && process.env.EXPO_PUBLIC_FF_IS_DEVICE_CONNECT_ENABLED !== 'false'),
     [FeatureFlag.IsCardanoSendEnabled]:
         process.env.EXPO_PUBLIC_FF_IS_CARDANO_SEND_ENABLED === 'true',
+    [FeatureFlag.IsStellarSupportEnabled]:
+        process.env.EXPO_PUBLIC_FF_IS_STELLAR_SUPPORT_ENABLED === 'true',
     [FeatureFlag.IsRegtestEnabled]: process.env.EXPO_PUBLIC_FF_IS_REGTEST_ENABLED === 'true',
     [FeatureFlag.IsConnectPopupEnabled]:
         process.env.EXPO_PUBLIC_FF_IS_CONNECT_POPUP_ENABLED === 'true',
@@ -47,6 +50,7 @@ export const featureFlagsInitialState: FeatureFlagsState = {
 export const featureFlagsPersistedKeys: Array<keyof FeatureFlagsState> = [
     FeatureFlag.IsDeviceConnectEnabled,
     FeatureFlag.IsCardanoSendEnabled,
+    FeatureFlag.IsStellarSupportEnabled,
     FeatureFlag.IsRegtestEnabled,
     FeatureFlag.IsConnectPopupEnabled,
     FeatureFlag.IsDeviceOnboardingRecoveryEnabled,
