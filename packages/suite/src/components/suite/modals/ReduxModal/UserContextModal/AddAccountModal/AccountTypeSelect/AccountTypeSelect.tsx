@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 import { NetworkAccount, NetworkSymbol, NetworkType } from '@suite-common/wallet-config';
 import { getAccountTypeName, getAccountTypeTech } from '@suite-common/wallet-utils';
-import { Column, Paragraph, Select } from '@trezor/components';
+import { Column, Select, Text } from '@trezor/components';
 import { spacings, typography } from '@trezor/theme';
 
 import { Translation } from 'src/components/suite/Translation';
@@ -80,14 +80,14 @@ export const AccountTypeSelect = ({
                 onChange={(option: Option) => onSelectAccountType(option.value)}
                 openMenuOnFocus={false}
             />
-            <Paragraph variant="tertiary" typographyStyle="hint">
+            <Text variant="tertiary" typographyStyle="hint" as="div">
                 <AccountTypeDescription
                     bip43Path={bip43PathToDescribe}
                     accountType={selectedAccountType?.accountType || 'normal'}
                     networkType={networkType}
                     symbol={symbol}
                 />
-            </Paragraph>
+            </Text>
         </Column>
     );
 };
