@@ -141,6 +141,7 @@ const applyDeviceStatesThunk = createThunk(
                             metadata: {},
                             instance: getNewInstanceNumber(selectDevices(getState()), device),
                             useEmptyPassphrase: !isAddingHiddenWallet,
+                            remember: false,
                             state: newDeviceState,
                         },
                     }),
