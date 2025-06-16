@@ -1814,6 +1814,11 @@ export const en = {
             buttonTitle: 'Select fiat currency',
             amountLabel: 'You pay',
         },
+        selectCoinToSell: {
+            title: 'You pay',
+            buttonTitle: 'Select coin',
+            amountLabel: 'You pay',
+        },
         selectCoin: {
             title: 'You get',
             buttonTitle: 'Select coin',
